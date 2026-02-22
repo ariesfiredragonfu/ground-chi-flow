@@ -27,10 +27,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Colors } from '../../constants/Colors';
-
-const STORAGE_KEY = 'routines_progress';
+import { useRoutineProgress } from '../../hooks/useHealthData';
 
 // ── Program definition ──────────────────────────────────────────────────────
 const PROGRAM = [
@@ -92,12 +90,7 @@ const PROGRAM = [
   },
 ];
 
-// ── Day progress type ────────────────────────────────────────────────────────
-interface DayProgress {
-  completed: boolean;
-  completedAt: string | null;
-}
-type Progress = Record<number, DayProgress>;
+// Types are imported from useHealthData hook
 
 // ── Helper: format seconds as MM:SS ─────────────────────────────────────────
 function formatTime(secs: number): string {
@@ -107,34 +100,12 @@ function formatTime(secs: number): string {
 }
 
 export default function RoutinesScreen() {
-  const [progress, setProgress] = useState<Progress>({});
-  const [loadingProgress, setLoadingProgress] = useState(true);
+  const { progress, loading: loadingProgress, markDay } = useRoutineProgress();
 
   // Timer state: tracks which day is running and the remaining seconds
   const [activeDay, setActiveDay] = useState<number | null>(null);
   const [timeLeft, setTimeLeft] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  // Load saved progress from AsyncStorage on mount
-  useEffect(() => {
-    (async () => {
-      try {
-        const stored = await AsyncStorage.getItem(STORAGE_KEY);
-        if (stored) setProgress(JSON.parse(stored));
-      } catch {
-        // Silently fail — user starts with empty progress
-      } finally {
-        setLoadingProgress(false);
-      }
-    })();
-  }, []);
-
-  // Persist progress whenever it changes
-  useEffect(() => {
-    if (!loadingProgress) {
-      AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(progress)).catch(() => {});
-    }
-  }, [progress, loadingProgress]);
 
   // Clean up timer on unmount
   useEffect(() => () => { clearInterval(timerRef.current!); }, []);
@@ -149,18 +120,14 @@ export default function RoutinesScreen() {
         if (prev <= 1) {
           clearInterval(timerRef.current!);
           setActiveDay(null);
-          // Auto-mark as complete when timer finishes
-          setProgress((p) => ({
-            ...p,
-            [day]: { completed: true, completedAt: new Date().toISOString() },
-          }));
+          markDay(day, true);
           Alert.alert('Session Complete! 🌿', `Day ${day} breathwork done. Great work!`);
           return 0;
         }
         return prev - 1;
       });
     }, 1000);
-  }, []);
+  }, [markDay]);
 
   const stopTimer = useCallback(() => {
     clearInterval(timerRef.current!);
@@ -169,14 +136,8 @@ export default function RoutinesScreen() {
   }, []);
 
   const toggleComplete = useCallback((day: number) => {
-    setProgress((p) => ({
-      ...p,
-      [day]: {
-        completed: !p[day]?.completed,
-        completedAt: !p[day]?.completed ? new Date().toISOString() : null,
-      },
-    }));
-  }, []);
+    markDay(day, !progress[day]?.completed);
+  }, [progress, markDay]);
 
   const completedCount = Object.values(progress).filter((d) => d.completed).length;
 

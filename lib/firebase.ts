@@ -22,10 +22,9 @@
 
 import { initializeApp, getApps } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import { getFirestore, enableNetwork } from 'firebase/firestore';
 
 // Values come from .env (EXPO_PUBLIC_* vars are auto-exposed by Expo — no extra packages needed)
-// To set up: fill in .env at the project root, then restart the dev server.
 const firebaseConfig = {
   apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
   authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -40,4 +39,8 @@ const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0
 
 export const auth = getAuth(app);
 export const db = getFirestore(app);
+
+// Re-enable network on startup (handles cases where previous session left it disabled)
+enableNetwork(db).catch(() => {});
+
 export default app;

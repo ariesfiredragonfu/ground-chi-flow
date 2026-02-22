@@ -15,7 +15,7 @@
  *  - Add photo upload (fermented food photos) via expo-image-picker
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -28,10 +28,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Colors } from '../../constants/Colors';
-
-const STORAGE_KEY = 'gut_health_logs';
+import { useGutHealthLogs } from '../../hooks/useHealthData';
 
 // ── Probiotic/fermented food options ────────────────────────────────────────
 const FOOD_OPTIONS = [
@@ -50,23 +48,13 @@ const FOOD_OPTIONS = [
   'Other',
 ];
 
-interface GutLogEntry {
-  id: string;
-  date: string;           // ISO date string (YYYY-MM-DD)
-  foods: string[];        // selected food options
-  otherFood: string;      // free-text for "Other"
-  mood: number;           // 1–10
-  energy: number;         // 1–10
-  notes: string;
-  savedAt: string;        // ISO timestamp
-}
+// Types imported from hook — GutLogEntry lives in useHealthData.ts
 
 // Today's date in YYYY-MM-DD
 const todayKey = () => new Date().toISOString().slice(0, 10);
 
 export default function GutHealthScreen() {
-  const [logs, setLogs] = useState<GutLogEntry[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { logs, loading, addLog, deleteLog: removeLog } = useGutHealthLogs();
 
   // Form state
   const [selectedFoods, setSelectedFoods] = useState<string[]>([]);
@@ -75,25 +63,6 @@ export default function GutHealthScreen() {
   const [energy, setEnergy] = useState(5);
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
-
-  // Load all logs on mount
-  useEffect(() => {
-    (async () => {
-      try {
-        const raw = await AsyncStorage.getItem(STORAGE_KEY);
-        if (raw) setLogs(JSON.parse(raw));
-      } catch {
-        // Silently fail
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, []);
-
-  // Persist logs to storage
-  const persistLogs = useCallback(async (updated: GutLogEntry[]) => {
-    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-  }, []);
 
   const toggleFood = (food: string) => {
     setSelectedFoods((prev) =>
@@ -108,8 +77,7 @@ export default function GutHealthScreen() {
     }
     setSaving(true);
     try {
-      const entry: GutLogEntry = {
-        id: Date.now().toString(),
+      await addLog({
         date: todayKey(),
         foods: selectedFoods,
         otherFood,
@@ -117,11 +85,7 @@ export default function GutHealthScreen() {
         energy,
         notes,
         savedAt: new Date().toISOString(),
-      };
-
-      const updated = [entry, ...logs];
-      setLogs(updated);
-      await persistLogs(updated);
+      });
 
       // Reset form
       setSelectedFoods([]);
@@ -138,20 +102,16 @@ export default function GutHealthScreen() {
     }
   };
 
-  const deleteLog = (id: string) => {
+  const deleteLog = useCallback((id: string) => {
     Alert.alert('Delete Entry', 'Remove this log entry?', [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Delete',
         style: 'destructive',
-        onPress: async () => {
-          const updated = logs.filter((l) => l.id !== id);
-          setLogs(updated);
-          await persistLogs(updated);
-        },
+        onPress: () => removeLog(id),
       },
     ]);
-  };
+  }, [removeLog]);
 
   if (loading) {
     return (
