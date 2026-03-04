@@ -26,9 +26,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
 import { Colors } from '../../constants/Colors';
 import { HERO_BANNER } from '../../constants/DisclaimerResources';
+import { useRouter } from 'expo-router';
 
 export default function LoginScreen() {
   const { signIn, signUp, loading, error, clearError, resetPassword, skipAuth } = useAuth();
+  const router = useRouter();
 
   const [mode, setMode] = useState<'login' | 'signup'>('login');
   const [email, setEmail] = useState('');
@@ -87,6 +89,12 @@ export default function LoginScreen() {
     }
   };
 
+  const handleSkip = () => {
+    clearError();
+    skipAuth();
+    router.replace('/(tabs)');
+  };
+
   return (
     <SafeAreaView style={styles.safe}>
       <KeyboardAvoidingView
@@ -116,7 +124,7 @@ export default function LoginScreen() {
             </Text>
 
             {/* Skip for now — top of card so always visible on web */}
-            <TouchableOpacity onPress={() => { clearError(); skipAuth(); }} style={styles.skipRow}>
+            <TouchableOpacity onPress={handleSkip} style={styles.skipRow}>
               <Text style={styles.skipText}>Skip for now</Text>
               <Text style={styles.skipSub}>Use the app without signing in. Data stays on this device.</Text>
             </TouchableOpacity>
