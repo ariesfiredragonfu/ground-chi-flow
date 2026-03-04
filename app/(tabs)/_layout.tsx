@@ -48,6 +48,10 @@ export default function TabLayout() {
         options={{ title: 'Dashboard', tabBarIcon: ({ color }) => <Ionicons name="pulse-outline" size={18} color={color} /> }}
       />
       <MaterialTopTabs.Screen
+        name="agent"
+        options={{ title: 'Coach', tabBarIcon: ({ color }) => <Ionicons name="chatbubbles-outline" size={18} color={color} /> }}
+      />
+      <MaterialTopTabs.Screen
         name="routines"
         options={{ title: 'Routines', tabBarIcon: ({ color }) => <Ionicons name="body-outline" size={18} color={color} /> }}
       />
@@ -66,10 +70,6 @@ export default function TabLayout() {
       <MaterialTopTabs.Screen
         name="resources"
         options={{ title: 'Resources', tabBarIcon: ({ color }) => <Ionicons name="library-outline" size={18} color={color} /> }}
-      />
-      <MaterialTopTabs.Screen
-        name="agent"
-        options={{ title: 'Coach', tabBarIcon: ({ color }) => <Ionicons name="chatbubbles-outline" size={18} color={color} /> }}
       />
     </MaterialTopTabs>
   );
