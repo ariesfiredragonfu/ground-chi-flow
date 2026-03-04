@@ -29,8 +29,14 @@ import {
   orderBy,
 } from 'firebase/firestore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { db } from '../lib/firebase';
+import { db, firebaseAvailable } from '../lib/firebase';
 import { useAuth } from '../context/AuthContext';
+import type { WearableProviderId } from '../constants/WearableRoadmap';
+
+// Use Firestore only when: real user (not guest) + Firebase available
+function useFirestore(user: { uid: string } | null): boolean {
+  return !!(user && user.uid !== 'guest' && db && firebaseAvailable);
+}
 
 // ── Shared Types ─────────────────────────────────────────────────────────────
 
@@ -52,22 +58,45 @@ export interface GutLogEntry {
   savedAt: string;
 }
 
+export interface VitalsEntry {
+  date: string;
+  hrv?: number;
+  sleepHrs?: number;
+  sleepQuality?: number;
+  energy?: number;
+  stress?: number;
+  coherence?: number;
+  /** Source of data: manual or wearable provider (for future import) */
+  source?: WearableProviderId;
+  savedAt: string;
+}
+
 // ── Internal AsyncStorage keys (fallback for unauthenticated) ────────────────
 const AS_ROUTINES_KEY = 'routines_progress';
 const AS_GUT_KEY = 'gut_health_logs';
+const AS_ROUTINE_DAY_KEY = 'routine_current_day';
+const AS_VITALS_KEY = 'vitals';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 function routinesDocRef(uid: string) {
+  if (!db) throw new Error('Firestore not available');
   return doc(db, 'users', uid, 'routines', 'progress');
 }
 
 function gutHealthColRef(uid: string) {
+  if (!db) throw new Error('Firestore not available');
   return collection(db, 'users', uid, 'gutHealth');
 }
 
 function gutHealthEntryRef(uid: string, entryId: string) {
+  if (!db) throw new Error('Firestore not available');
   return doc(db, 'users', uid, 'gutHealth', entryId);
+}
+
+function vitalsDocRef(uid: string, date: string) {
+  if (!db) throw new Error('Firestore not available');
+  return doc(db, 'users', uid, 'vitals', date);
 }
 
 // ── Hook: Routine Progress ────────────────────────────────────────────────────
@@ -77,10 +106,9 @@ export function useRoutineProgress() {
   const [progress, setProgress] = useState<RoutineProgress>({});
   const [loading, setLoading] = useState(true);
 
-  // Subscribe to Firestore in real time when authenticated
+  // Subscribe to Firestore in real time when authenticated; else AsyncStorage
   useEffect(() => {
-    if (!user) {
-      // Fallback: load from AsyncStorage
+    if (!useFirestore(user)) {
       AsyncStorage.getItem(AS_ROUTINES_KEY)
         .then((raw) => {
           if (raw) setProgress(JSON.parse(raw));
@@ -91,7 +119,7 @@ export function useRoutineProgress() {
     }
 
     setLoading(true);
-    const ref = routinesDocRef(user.uid);
+    const ref = routinesDocRef(user!.uid);
 
     // onSnapshot keeps the UI in sync across devices in real time
     const unsubscribe = onSnapshot(
@@ -115,12 +143,12 @@ export function useRoutineProgress() {
     async (updated: RoutineProgress) => {
       setProgress(updated);
 
-      if (!user) {
+      if (!useFirestore(user)) {
         await AsyncStorage.setItem(AS_ROUTINES_KEY, JSON.stringify(updated));
         return;
       }
 
-      await setDoc(routinesDocRef(user.uid), updated, { merge: true });
+      await setDoc(routinesDocRef(user!.uid), updated, { merge: true });
     },
     [user]
   );
@@ -142,6 +170,58 @@ export function useRoutineProgress() {
   return { progress, loading, markDay, saveProgress };
 }
 
+// ── Hook: Routine Day (shiftable, persists across missed days) ───────────────
+// Decouples routine from calendar. Push back/forward when you miss days or vacation.
+export function useRoutineDay() {
+  const { user } = useAuth();
+  const [routineDay, setRoutineDayState] = useState<number>(1);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    AsyncStorage.getItem(AS_ROUTINE_DAY_KEY)
+      .then((raw) => {
+        if (raw) {
+          const n = parseInt(raw, 10);
+          if (n >= 1 && n <= 7) setRoutineDayState(n);
+        } else {
+          // First time: default to today's calendar day
+          const d = new Date().getDay();
+          const calendarDay = d === 0 ? 7 : d;
+          setRoutineDayState(calendarDay);
+          AsyncStorage.setItem(AS_ROUTINE_DAY_KEY, String(calendarDay));
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  const saveRoutineDay = useCallback(async (day: number) => {
+    const d = ((day - 1) % 7 + 7) % 7 + 1; // clamp 1-7
+    setRoutineDayState(d);
+    await AsyncStorage.setItem(AS_ROUTINE_DAY_KEY, String(d));
+  }, []);
+
+  const pushBack = useCallback(() => {
+    saveRoutineDay(routineDay - 1); // yesterday's routine
+  }, [routineDay, saveRoutineDay]);
+
+  const pushForward = useCallback(() => {
+    saveRoutineDay(routineDay + 1); // tomorrow's routine
+  }, [routineDay, saveRoutineDay]);
+
+  const setToToday = useCallback(() => {
+    const d = new Date().getDay();
+    const calendarDay = d === 0 ? 7 : d;
+    saveRoutineDay(calendarDay);
+  }, [saveRoutineDay]);
+
+  const setDay = useCallback((day: number) => {
+    saveRoutineDay(day);
+  }, [saveRoutineDay]);
+
+  return { routineDay, loading, pushBack, pushForward, setToToday, setDay };
+}
+
 // ── Hook: Gut Health Logs ─────────────────────────────────────────────────────
 
 export function useGutHealthLogs() {
@@ -149,9 +229,9 @@ export function useGutHealthLogs() {
   const [logs, setLogs] = useState<GutLogEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Subscribe to Firestore in real time when authenticated
+  // Subscribe to Firestore when authenticated; else AsyncStorage
   useEffect(() => {
-    if (!user) {
+    if (!useFirestore(user)) {
       AsyncStorage.getItem(AS_GUT_KEY)
         .then((raw) => {
           if (raw) setLogs(JSON.parse(raw));
@@ -163,7 +243,7 @@ export function useGutHealthLogs() {
 
     setLoading(true);
     const colRef = query(
-      gutHealthColRef(user.uid),
+      gutHealthColRef(user!.uid),
       orderBy('savedAt', 'desc')
     );
 
@@ -187,7 +267,7 @@ export function useGutHealthLogs() {
 
   const addLog = useCallback(
     async (entry: Omit<GutLogEntry, 'id'>): Promise<void> => {
-      if (!user) {
+      if (!useFirestore(user)) {
         const newEntry: GutLogEntry = { id: Date.now().toString(), ...entry };
         const updated = [newEntry, ...logs];
         setLogs(updated);
@@ -195,8 +275,7 @@ export function useGutHealthLogs() {
         return;
       }
 
-      // Firestore path — id is assigned by Firestore
-      await addDoc(gutHealthColRef(user.uid), {
+      await addDoc(gutHealthColRef(user!.uid), {
         ...entry,
         savedAt: entry.savedAt,
         _createdAt: serverTimestamp(),
@@ -208,18 +287,103 @@ export function useGutHealthLogs() {
 
   const deleteLog = useCallback(
     async (id: string): Promise<void> => {
-      if (!user) {
+      if (!useFirestore(user)) {
         const updated = logs.filter((l) => l.id !== id);
         setLogs(updated);
         await AsyncStorage.setItem(AS_GUT_KEY, JSON.stringify(updated));
         return;
       }
 
-      await deleteDoc(gutHealthEntryRef(user.uid, id));
+      await deleteDoc(gutHealthEntryRef(user!.uid, id));
       // onSnapshot listener above updates state automatically
     },
     [user, logs]
   );
 
   return { logs, loading, addLog, deleteLog };
+}
+
+// ── Hook: Daily Vitals (HRV, Sleep, Energy, Stress) ────────────────────────────
+// One entry per date. Merge on save so users can log HRV now, Sleep later.
+export function useVitals() {
+  const { user } = useAuth();
+  const [vitalsByDate, setVitalsByDate] = useState<Record<string, VitalsEntry>>({});
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!useFirestore(user)) {
+      AsyncStorage.getItem(AS_VITALS_KEY)
+        .then((raw) => {
+          if (raw) setVitalsByDate(JSON.parse(raw));
+        })
+        .catch(() => {})
+        .finally(() => setLoading(false));
+      return;
+    }
+
+    setLoading(true);
+    const today = new Date().toISOString().slice(0, 10);
+    getDoc(vitalsDocRef(user!.uid, today))
+      .then((snap) => {
+        if (snap.exists()) {
+          setVitalsByDate((prev) => ({ ...prev, [today]: snap.data() as VitalsEntry }));
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [user]);
+
+  const getVitals = useCallback(
+    async (date: string): Promise<VitalsEntry | null> => {
+      if (!useFirestore(user)) {
+        return vitalsByDate[date] ?? null;
+      }
+      try {
+        const snap = await getDoc(vitalsDocRef(user!.uid, date));
+        return snap.exists() ? (snap.data() as VitalsEntry) : null;
+      } catch {
+        return vitalsByDate[date] ?? null;
+      }
+    },
+    [user, vitalsByDate]
+  );
+
+  const saveVitals = useCallback(
+    async (date: string, data: Partial<Omit<VitalsEntry, 'date' | 'savedAt'>>): Promise<void> => {
+      const savedAt = new Date().toISOString();
+      const entry: VitalsEntry = {
+        date,
+        ...vitalsByDate[date],
+        ...data,
+        savedAt,
+      };
+      setVitalsByDate((prev) => ({ ...prev, [date]: entry }));
+
+      if (!useFirestore(user)) {
+        const updated = { ...vitalsByDate, [date]: entry };
+        await AsyncStorage.setItem(AS_VITALS_KEY, JSON.stringify(updated));
+        return;
+      }
+
+      await setDoc(vitalsDocRef(user!.uid, date), entry, { merge: true });
+    },
+    [user, vitalsByDate]
+  );
+
+  const loadVitalsForDate = useCallback(
+    async (date: string) => {
+      if (!useFirestore(user)) return vitalsByDate[date] ?? null;
+      try {
+        const snap = await getDoc(vitalsDocRef(user!.uid, date));
+        const data = snap.exists() ? (snap.data() as VitalsEntry) : null;
+        if (data) setVitalsByDate((prev) => ({ ...prev, [date]: data }));
+        return data;
+      } catch {
+        return vitalsByDate[date] ?? null;
+      }
+    },
+    [user, vitalsByDate]
+  );
+
+  return { vitalsByDate, loading, getVitals, saveVitals, loadVitalsForDate };
 }
