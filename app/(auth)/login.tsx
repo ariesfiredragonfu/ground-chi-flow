@@ -193,6 +193,12 @@ export default function LoginScreen() {
               )}
             </TouchableOpacity>
 
+            {/* Skip for now — visible without scrolling (web/small viewports) */}
+            <TouchableOpacity onPress={() => { clearError(); skipAuth(); }} style={styles.skipRow}>
+              <Text style={styles.skipText}>Skip for now</Text>
+              <Text style={styles.skipSub}>Use the app without signing in. Data stays on this device.</Text>
+            </TouchableOpacity>
+
             {/* Forgot password (login only) */}
             {mode === 'login' && (
               <TouchableOpacity onPress={handleForgotPassword} style={styles.forgotRow}>
@@ -210,12 +216,6 @@ export default function LoginScreen() {
                   {mode === 'login' ? 'Sign Up' : 'Sign In'}
                 </Text>
               </Text>
-            </TouchableOpacity>
-
-            {/* Skip for now — use app as guest (testing / before selling) */}
-            <TouchableOpacity onPress={() => { clearError(); skipAuth(); }} style={styles.skipRow}>
-              <Text style={styles.skipText}>Skip for now</Text>
-              <Text style={styles.skipSub}>Use the app without signing in. Data stays on this device.</Text>
             </TouchableOpacity>
           </View>
 
