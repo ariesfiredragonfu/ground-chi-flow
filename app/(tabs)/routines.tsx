@@ -105,6 +105,34 @@ export default function RoutinesScreen() {
   const taiChiDay = TAI_CHI_QI_GONG_BAGUA[routineDay - 1];
   const dayName = ROUTINE_DAY_NAMES[routineDay - 1];
 
+  // Guard: if routine data is missing (e.g. old deploy), show fallback instead of crashing
+  const hasFullRoutine =
+    meditation != null &&
+    breathwork != null &&
+    taiChiDay != null &&
+    Array.isArray(CORE_BALANCE) &&
+    CORE_BALANCE.length > 0 &&
+    Array.isArray(mainExercises);
+
+  if (!hasFullRoutine) {
+    return (
+      <SafeAreaView style={styles.safe}>
+        <ScrollView contentContainerStyle={[styles.container, { paddingTop: 40 }]}>
+          <Text style={styles.screenTitle}>Daily Morning Routine</Text>
+          <Text style={[styles.screenSub, { marginTop: 12 }]}>
+            Routine data is still loading or this build is outdated. Try a hard refresh (Ctrl+Shift+R).
+          </Text>
+          <Text style={[styles.screenSub2, { marginTop: 8 }]}>
+            If the problem persists, the latest update may not have deployed yet.
+          </Text>
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
+
+  const breathworkCompleted = progress[breathwork.day]?.completed ?? false;
+  const breathworkBadgeStyle = { ...styles.dayBadge, backgroundColor: breathwork.color + '22' };
+
   const startBreathworkTimer = useCallback((day: number, duration: number) => {
     clearInterval(timerRef.current!);
     setActiveBreathworkDay(day);
@@ -132,9 +160,6 @@ export default function RoutinesScreen() {
   const toggleComplete = useCallback((day: number) => {
     markDay(day, !progress[day]?.completed);
   }, [progress, markDay]);
-
-  const breathworkCompleted = progress[breathwork.day]?.completed ?? false;
-  const breathworkBadgeStyle = { ...styles.dayBadge, backgroundColor: breathwork.color + '22' };
 
   if (loadingProgress) {
     return (

@@ -7,13 +7,54 @@
  *  - User logged in      → show /(tabs) (the tab navigator)
  */
 
+import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { useEffect } from 'react';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { AuthProvider, useAuth } from '../context/AuthContext';
-import { View, ActivityIndicator } from 'react-native';
+import { View, ActivityIndicator, Text, TouchableOpacity } from 'react-native';
 import { Colors } from '../constants/Colors';
 import { useFonts } from 'expo-font';
+
+type ErrorBoundaryProps = { children: ReactNode };
+type ErrorBoundaryState = { hasError: boolean; error: Error | null };
+
+class RootErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  state: ErrorBoundaryState = { hasError: false, error: null };
+
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error('RootErrorBoundary:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError && this.state.error) {
+      return (
+        <View style={{ flex: 1, backgroundColor: Colors.bg, padding: 24, justifyContent: 'center' }}>
+          <Text style={{ color: Colors.error, fontSize: 16, fontWeight: '700', marginBottom: 8 }}>
+            Something went wrong
+          </Text>
+          <Text style={{ color: Colors.textSecondary, fontSize: 14, marginBottom: 16 }}>
+            {this.state.error.message}
+          </Text>
+          <Text style={{ color: Colors.textMuted, fontSize: 12, marginBottom: 24 }}>
+            Press F12 → Console for details. Hard refresh (Ctrl+Shift+R) may help.
+          </Text>
+          <TouchableOpacity
+            style={{ backgroundColor: Colors.primary, paddingVertical: 12, paddingHorizontal: 20, borderRadius: 10, alignSelf: 'flex-start' }}
+            onPress={() => this.setState({ hasError: false, error: null })}
+          >
+            <Text style={{ color: Colors.white, fontWeight: '700' }}>Try again</Text>
+          </TouchableOpacity>
+        </View>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 function RootLayoutNav() {
   const { user, loading } = useAuth();
@@ -53,13 +94,14 @@ function RootLayoutNav() {
 }
 
 export default function RootLayout() {
-  // Load any custom fonts here if needed in the future
   const [fontsLoaded] = useFonts({});
 
   return (
-    <AuthProvider>
-      <StatusBar style="light" backgroundColor={Colors.bg} />
-      <RootLayoutNav />
-    </AuthProvider>
+    <RootErrorBoundary>
+      <AuthProvider>
+        <StatusBar style="light" backgroundColor={Colors.bg} />
+        <RootLayoutNav />
+      </AuthProvider>
+    </RootErrorBoundary>
   );
 }
