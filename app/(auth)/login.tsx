@@ -5,7 +5,6 @@
  * Uses Firebase Auth via AuthContext (email + password).
  *
  * For production:
- *  - Add "Forgot password?" with sendPasswordResetEmail()
  *  - Add Google/Apple OAuth using expo-auth-session
  */
 
@@ -26,9 +25,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
 import { Colors } from '../../constants/Colors';
+import { HERO_BANNER } from '../../constants/DisclaimerResources';
 
 export default function LoginScreen() {
-  const { signIn, signUp, loading, error, clearError } = useAuth();
+  const { signIn, signUp, loading, error, clearError, resetPassword, skipAuth } = useAuth();
 
   const [mode, setMode] = useState<'login' | 'signup'>('login');
   const [email, setEmail] = useState('');
@@ -66,6 +66,27 @@ export default function LoginScreen() {
     setConfirmPassword('');
   };
 
+  const handleForgotPassword = async () => {
+    clearError();
+    const emailTrimmed = email.trim();
+    if (!emailTrimmed) {
+      Alert.alert(
+        'Enter your email',
+        'Type your email address in the box above, then tap Forgot password? again.'
+      );
+      return;
+    }
+    try {
+      await resetPassword(emailTrimmed);
+      Alert.alert(
+        'Check your email',
+        'If an account exists for that address, we sent a link to reset your password. Check your inbox and spam folder.'
+      );
+    } catch {
+      // Error already set in context
+    }
+  };
+
   return (
     <SafeAreaView style={styles.safe}>
       <KeyboardAvoidingView
@@ -82,7 +103,10 @@ export default function LoginScreen() {
             <Text style={styles.brandName}>GroundChiFlow</Text>
           </View>
           <Text style={styles.tagline}>
-            Nervous system · Breathwork · Gut & Cellular Health
+            {HERO_BANNER.headline}
+          </Text>
+          <Text style={styles.taglineSub}>
+            Nervous system · Breathwork · Gut · Nutrition · Longevity
           </Text>
 
           {/* Card */}
@@ -169,6 +193,13 @@ export default function LoginScreen() {
               )}
             </TouchableOpacity>
 
+            {/* Forgot password (login only) */}
+            {mode === 'login' && (
+              <TouchableOpacity onPress={handleForgotPassword} style={styles.forgotRow}>
+                <Text style={styles.forgotText}>Forgot password?</Text>
+              </TouchableOpacity>
+            )}
+
             {/* Toggle mode */}
             <TouchableOpacity onPress={toggleMode} style={styles.toggleRow}>
               <Text style={styles.toggleText}>
@@ -179,6 +210,12 @@ export default function LoginScreen() {
                   {mode === 'login' ? 'Sign Up' : 'Sign In'}
                 </Text>
               </Text>
+            </TouchableOpacity>
+
+            {/* Skip for now — use app as guest (testing / before selling) */}
+            <TouchableOpacity onPress={() => { clearError(); skipAuth(); }} style={styles.skipRow}>
+              <Text style={styles.skipText}>Skip for now</Text>
+              <Text style={styles.skipSub}>Use the app without signing in. Data stays on this device.</Text>
             </TouchableOpacity>
           </View>
 
@@ -215,8 +252,15 @@ const styles = StyleSheet.create({
   },
   tagline: {
     textAlign: 'center',
+    color: Colors.textPrimary,
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  taglineSub: {
+    textAlign: 'center',
     color: Colors.textSecondary,
-    fontSize: 13,
+    fontSize: 12,
     marginBottom: 32,
   },
   card: {
@@ -278,9 +322,14 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     fontSize: 16,
   },
+  forgotRow: { marginTop: 12, alignItems: 'center' },
+  forgotText: { color: Colors.primary, fontSize: 14, fontWeight: '600' },
   toggleRow: { marginTop: 16, alignItems: 'center' },
   toggleText: { color: Colors.textSecondary, fontSize: 14 },
   toggleLink: { color: Colors.primary, fontWeight: '700' },
+  skipRow: { marginTop: 24, alignItems: 'center', paddingVertical: 12, paddingHorizontal: 16, borderWidth: 1, borderColor: Colors.border, borderRadius: 12 },
+  skipText: { color: Colors.primary, fontSize: 16, fontWeight: '700' },
+  skipSub: { color: Colors.textSecondary, fontSize: 12, marginTop: 4, textAlign: 'center' },
   footer: {
     textAlign: 'center',
     color: Colors.textMuted,
