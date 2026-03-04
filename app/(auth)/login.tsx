@@ -92,7 +92,12 @@ export default function LoginScreen() {
   const handleSkip = () => {
     clearError();
     skipAuth();
-    router.replace('/(tabs)');
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      const path = window.location.pathname.replace(/\/login\/?$/, '') || '/';
+      window.location.href = path ? `${path}/` : '/';
+    } else {
+      router.replace('/(tabs)');
+    }
   };
 
   return (
