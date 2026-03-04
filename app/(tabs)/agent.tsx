@@ -22,8 +22,15 @@ import { sendToAgent, isBridgeConfigured } from '../../lib/grokBridge';
 import type { ChatMessage } from '../../lib/grokBridge';
 import { HEALTH_AGENT_SYSTEM_PROMPT } from '../../constants/AgentPrompt';
 import { Colors } from '../../constants/Colors';
+import { useRoutineProgress, useRoutineDay, useVitals } from '../../hooks/useHealthData';
 
 type MessageRow = { id: string; role: 'user' | 'assistant'; content: string };
+
+const SUGGESTED_PROMPTS = [
+  { label: "How did my week go?", key: 'week' },
+  { label: "What's one thing for today?", key: 'today' },
+  { label: "Suggest a habit", key: 'nudge' },
+];
 
 export default function AgentScreen() {
   const [messages, setMessages] = useState<MessageRow[]>([]);
@@ -33,6 +40,36 @@ export default function AgentScreen() {
   const scrollRef = useRef<ScrollView>(null);
 
   const bridgeOk = isBridgeConfigured();
+  const { progress: routineProgress } = useRoutineProgress();
+  const { routineDay } = useRoutineDay();
+  const { vitalsByDate } = useVitals();
+
+  function buildContextString(): string {
+    const now = new Date();
+    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const todayName = dayNames[now.getDay()];
+    const parts: string[] = [`Today is ${todayName}.`];
+    const todayKey = now.toISOString().slice(0, 10);
+    const vitals = vitalsByDate[todayKey];
+    const dayProgress = routineProgress[routineDay];
+    if (routineDay >= 1 && routineDay <= 7) {
+      if (dayProgress?.completed) {
+        parts.push(`Routine day ${routineDay}: completed today.`);
+      } else {
+        parts.push(`Routine day ${routineDay}: not yet completed today.`);
+      }
+    }
+    if (vitals) {
+      const v: string[] = [];
+      if (vitals.hrv != null) v.push(`HRV: ${vitals.hrv} ms`);
+      if (vitals.energy != null) v.push(`energy: ${vitals.energy}/10`);
+      if (vitals.stress != null) v.push(`stress: ${Math.round((vitals.stress ?? 0) * 10)}/10`);
+      if (vitals.coherence != null) v.push(`coherence: ${vitals.coherence}%`);
+      if (vitals.sleepHrs != null) v.push(`sleep: ${vitals.sleepHrs} hrs`);
+      if (v.length) parts.push(v.join(', ') + '.');
+    }
+    return parts.join(' ');
+  }
 
   useEffect(() => {
     if (messages.length) {
@@ -40,8 +77,8 @@ export default function AgentScreen() {
     }
   }, [messages]);
 
-  const handleSend = async () => {
-    const text = input.trim();
+  const handleSend = async (overrideText?: string) => {
+    const text = (overrideText ?? input.trim()).trim();
     if (!text || loading) return;
 
     setInput('');
@@ -62,8 +99,13 @@ export default function AgentScreen() {
     setLoading(true);
 
     try {
+      const contextBlock = buildContextString();
+      const systemContent = contextBlock
+        ? `Context (use only to personalize, do not repeat back): ${contextBlock}\n\n${HEALTH_AGENT_SYSTEM_PROMPT}`
+        : HEALTH_AGENT_SYSTEM_PROMPT;
+
       const chatHistory: ChatMessage[] = [
-        { role: 'system', content: HEALTH_AGENT_SYSTEM_PROMPT },
+        { role: 'system', content: systemContent },
         ...messages.map((m) => ({ role: m.role, content: m.content })),
         { role: 'user', content: text },
       ];
@@ -125,6 +167,18 @@ export default function AgentScreen() {
               <Text style={styles.welcomeText}>
                 Try: “How do I log my blood work?” or “What’s a good morning routine for HRV?”
               </Text>
+              <View style={styles.suggestedRow}>
+                {SUGGESTED_PROMPTS.map((p) => (
+                  <TouchableOpacity
+                    key={p.key}
+                    style={styles.suggestedChip}
+                    onPress={() => handleSend(p.label)}
+                    disabled={loading}
+                  >
+                    <Text style={styles.suggestedChipText}>{p.label}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
             </View>
           )}
 
@@ -157,7 +211,22 @@ export default function AgentScreen() {
         </ScrollView>
 
         {/* Input row */}
-        <View style={styles.inputRow}>
+        <View style={styles.inputSection}>
+          {messages.length > 0 && (
+            <View style={styles.suggestedRowCompact}>
+              {SUGGESTED_PROMPTS.map((p) => (
+                <TouchableOpacity
+                  key={p.key}
+                  style={styles.suggestedChipCompact}
+                  onPress={() => handleSend(p.label)}
+                  disabled={loading}
+                >
+                  <Text style={styles.suggestedChipTextCompact} numberOfLines={1}>{p.label}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+          <View style={styles.inputRow}>
           <TextInput
             style={styles.input}
             placeholder="Ask about health or the app…"
@@ -170,11 +239,12 @@ export default function AgentScreen() {
           />
           <TouchableOpacity
             style={[styles.sendBtn, (!input.trim() || loading) && styles.sendBtnDisabled]}
-            onPress={handleSend}
+            onPress={() => handleSend()}
             disabled={!input.trim() || loading}
           >
             <Ionicons name="send" size={22} color={Colors.white} />
           </TouchableOpacity>
+        </View>
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -212,6 +282,54 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 8,
     lineHeight: 20,
+  },
+
+  suggestedRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: 8,
+    marginTop: 20,
+    paddingHorizontal: 8,
+  },
+  suggestedChip: {
+    backgroundColor: Colors.bgCardLight,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: 20,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+  },
+  suggestedChipText: {
+    fontSize: 13,
+    color: Colors.primary,
+    fontWeight: '600',
+  },
+  inputSection: {
+    backgroundColor: Colors.bgCard,
+    borderTopWidth: 1,
+    borderTopColor: Colors.border,
+  },
+  suggestedRowCompact: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    gap: 6,
+  },
+  suggestedChipCompact: {
+    backgroundColor: Colors.bgCardLight,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: 14,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    maxWidth: '48%',
+  },
+  suggestedChipTextCompact: {
+    fontSize: 12,
+    color: Colors.primary,
+    fontWeight: '500',
   },
 
   bubbleWrap: { marginBottom: 12 },
@@ -255,9 +373,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     paddingBottom: 24,
-    backgroundColor: Colors.bgCard,
-    borderTopWidth: 1,
-    borderTopColor: Colors.border,
     gap: 10,
   },
   input: {
