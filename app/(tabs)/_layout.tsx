@@ -67,7 +67,10 @@ export default function TabLayout() {
         name="resources"
         options={{ title: 'Resources', tabBarIcon: ({ color }) => <Ionicons name="library-outline" size={18} color={color} /> }}
       />
-      {/* Coach tab kept off deployed app until we integrate; agent.tsx + AgentPrompt + grokBridge are in repo */}
+      <MaterialTopTabs.Screen
+        name="agent"
+        options={{ title: 'Coach', tabBarIcon: ({ color }) => <Ionicons name="chatbubbles-outline" size={18} color={color} /> }}
+      />
     </MaterialTopTabs>
   );
 }
