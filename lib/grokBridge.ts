@@ -58,6 +58,6 @@ export async function sendToAgent(messages: ChatMessage[]): Promise<string> {
 }
 
 export function isBridgeConfigured(): boolean {
-  const url = process.env.EXPO_PUBLIC_GROK_BRIDGE_URL;
+  const url = getBridgeUrl();
   return !!(url && url.startsWith('http'));
 }
