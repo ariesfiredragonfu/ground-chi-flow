@@ -1,18 +1,10 @@
 /**
- * Routines screen — "7-Day Breathwork Basics" program.
+ * Routines screen — Daily Morning Routine
  *
- * Features:
- *  - Scrollable list of daily sessions (Day 1–7)
- *  - Countdown timer per session
- *  - Completion checkboxes persisted to AsyncStorage
+ * Order: Meditation → Breathwork → Core Balance → G-O-A-T-A Floor →
+ *        Tai Chi/Qigong/Bagua → Main Exercises (Mon/Wed/Fri)
  *
- * Persistence:
- *  AsyncStorage key: "routines_progress"
- *  Each day stores { completed: boolean, completedAt: string | null }
- *
- * To upgrade to Firebase Firestore:
- *  Replace AsyncStorage get/set with Firestore doc reads/writes
- *  keyed to the authenticated user's UID.
+ * Persistence: AsyncStorage / Firestore via useRoutineProgress
  */
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
@@ -24,104 +16,106 @@ import {
   TouchableOpacity,
   Alert,
   ActivityIndicator,
+  Linking,
 } from 'react-native';
+import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/Colors';
-import { useRoutineProgress } from '../../hooks/useHealthData';
+import { useRoutineProgress, useRoutineDay } from '../../hooks/useHealthData';
+import {
+  MEDITATIONS,
+  BREATHWORK,
+  CORE_BALANCE,
+  GOATA_FLOOR,
+  TAI_CHI_QI_GONG_BAGUA,
+  WARMUP,
+  NERVOUS_SYSTEM_FASCIA,
+  ROUTINE_DAY_NAMES,
+  isMainBlockDay,
+  getMainExerciseDay,
+  getMainExercises,
+  LONGEVITY_CARDIO,
+  VERTICAL_LOAD_PROGRESSION,
+  BALANCE_FUN_SPORTS,
+} from '../../constants/DailyRoutine';
 
-// ── Program definition ──────────────────────────────────────────────────────
-const PROGRAM = [
-  {
-    day: 1,
-    title: 'Box Breathing',
-    duration: 5 * 60,  // seconds
-    description: 'Inhale 4s · Hold 4s · Exhale 4s · Hold 4s. Activates the parasympathetic nervous system.',
-    icon: 'square-outline' as const,
-    color: Colors.primary,
-  },
-  {
-    day: 2,
-    title: '4-7-8 Breathing',
-    duration: 6 * 60,
-    description: 'Inhale 4s · Hold 7s · Exhale 8s. Deep nervous system reset and anxiety relief.',
-    icon: 'timer-outline' as const,
-    color: Colors.secondary,
-  },
-  {
-    day: 3,
-    title: 'Resonant Breathing',
-    duration: 8 * 60,
-    description: 'Breathe at 5–6 breaths/min (5s in, 5s out). Maximises HRV and heart coherence.',
-    icon: 'heart-outline' as const,
-    color: Colors.hrv,
-  },
-  {
-    day: 4,
-    title: 'Diaphragmatic Breathing',
-    duration: 7 * 60,
-    description: 'Belly rises on inhale, falls on exhale. Foundation of all breathwork.',
-    icon: 'body-outline' as const,
-    color: Colors.gut,
-  },
-  {
-    day: 5,
-    title: 'Alternate Nostril',
-    duration: 8 * 60,
-    description: 'Nadi Shodhana Pranayama — balances left/right brain hemispheres.',
-    icon: 'git-branch-outline' as const,
-    color: Colors.energy,
-  },
-  {
-    day: 6,
-    title: 'Wim Hof Method',
-    duration: 10 * 60,
-    description: '30 deep breaths, retain on exhale. Energising and immune-boosting.',
-    icon: 'flame-outline' as const,
-    color: Colors.warning,
-  },
-  {
-    day: 7,
-    title: 'Integration & Flow',
-    duration: 12 * 60,
-    description: 'Choose your favourite technique from the week. Build your personal practice.',
-    icon: 'leaf-outline' as const,
-    color: Colors.primary,
-  },
-];
-
-// Types are imported from useHealthData hook
-
-// ── Helper: format seconds as MM:SS ─────────────────────────────────────────
+// ── Helpers ─────────────────────────────────────────────────────────────────
 function formatTime(secs: number): string {
   const m = Math.floor(secs / 60).toString().padStart(2, '0');
   const s = (secs % 60).toString().padStart(2, '0');
   return `${m}:${s}`;
 }
 
-export default function RoutinesScreen() {
-  const { progress, loading: loadingProgress, markDay } = useRoutineProgress();
 
-  // Timer state: tracks which day is running and the remaining seconds
-  const [activeDay, setActiveDay] = useState<number | null>(null);
+// ── Section component ───────────────────────────────────────────────────────
+function Section({
+  title,
+  icon,
+  color,
+  children,
+}: {
+  title: string;
+  icon: keyof typeof Ionicons.glyphMap;
+  color: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <View style={styles.section}>
+      <View style={[styles.sectionHeader, { borderLeftColor: color }]}>
+        <Ionicons name={icon} size={20} color={color} />
+        <Text style={styles.sectionTitle}>{title}</Text>
+      </View>
+      {children}
+    </View>
+  );
+}
+
+// ── Exercise item ────────────────────────────────────────────────────────────
+function ExerciseItem({ name, detail, reps }: { name: string; detail: string | null; reps: string | null }) {
+  return (
+    <View style={styles.exerciseRow}>
+      <Text style={styles.exerciseName}>{name}</Text>
+      {(detail || reps) && (
+        <Text style={styles.exerciseDetail}>
+          {[detail, reps].filter(Boolean).join(' · ')}
+        </Text>
+      )}
+    </View>
+  );
+}
+
+export default function RoutinesScreen() {
+  const router = useRouter();
+  const { progress, loading: loadingProgress, markDay } = useRoutineProgress();
+  const { routineDay, pushBack, pushForward, setToToday, setDay } = useRoutineDay();
+  const mainBlockToday = isMainBlockDay(routineDay);
+  const mainDay = getMainExerciseDay(routineDay);
+  const mainExercises = getMainExercises(mainDay);
+
+  const [activeBreathworkDay, setActiveBreathworkDay] = useState<number | null>(null);
   const [timeLeft, setTimeLeft] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [showDayPicker, setShowDayPicker] = useState(false);
 
-  // Clean up timer on unmount
   useEffect(() => () => { clearInterval(timerRef.current!); }, []);
 
-  const startTimer = useCallback((day: number, duration: number) => {
-    clearInterval(timerRef.current!);
-    setActiveDay(day);
-    setTimeLeft(duration);
+  const meditation = MEDITATIONS[routineDay - 1];
+  const breathwork = BREATHWORK[routineDay - 1];
+  const taiChiDay = TAI_CHI_QI_GONG_BAGUA[routineDay - 1];
+  const dayName = ROUTINE_DAY_NAMES[routineDay - 1];
 
+  const startBreathworkTimer = useCallback((day: number, duration: number) => {
+    clearInterval(timerRef.current!);
+    setActiveBreathworkDay(day);
+    setTimeLeft(duration * 60);
     timerRef.current = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
           clearInterval(timerRef.current!);
-          setActiveDay(null);
+          setActiveBreathworkDay(null);
           markDay(day, true);
-          Alert.alert('Session Complete! 🌿', `Day ${day} breathwork done. Great work!`);
+          Alert.alert('Breathwork Complete! 🌿', `Day ${day} done. Great work!`);
           return 0;
         }
         return prev - 1;
@@ -131,7 +125,7 @@ export default function RoutinesScreen() {
 
   const stopTimer = useCallback(() => {
     clearInterval(timerRef.current!);
-    setActiveDay(null);
+    setActiveBreathworkDay(null);
     setTimeLeft(0);
   }, []);
 
@@ -139,7 +133,8 @@ export default function RoutinesScreen() {
     markDay(day, !progress[day]?.completed);
   }, [progress, markDay]);
 
-  const completedCount = Object.values(progress).filter((d) => d.completed).length;
+  const breathworkCompleted = progress[breathwork.day]?.completed ?? false;
+  const breathworkBadgeStyle = { ...styles.dayBadge, backgroundColor: breathwork.color + '22' };
 
   if (loadingProgress) {
     return (
@@ -151,119 +146,240 @@ export default function RoutinesScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
-        {/* ── Header ───────────────────────────────────────────── */}
-        <Text style={styles.screenTitle}>7-Day Breathwork Basics</Text>
+      <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={true}>
+        <Text style={styles.screenTitle}>Daily Morning Routine</Text>
         <Text style={styles.screenSub}>
-          Build a daily nervous system reset practice in one week.
+          Routine Day {routineDay} ({dayName}-style) · {mainBlockToday ? `Main: ${mainDay}` : 'Nervous System & Fascia'}
+        </Text>
+        <Text style={styles.screenSub2}>
+          Meditation · Breathwork · Core Balance · GOATA · Tai Chi · {mainBlockToday ? 'Main' : 'Nervous System'} · Optional cardio
         </Text>
 
-        {/* ── Overall progress bar ─────────────────────────────── */}
-        <View style={styles.progressBar}>
+        {/* Day shift controls */}
+        <View style={styles.dayControls}>
+          <TouchableOpacity style={styles.dayBtn} onPress={pushBack}>
+            <Ionicons name="chevron-back" size={20} color={Colors.primary} />
+            <Text style={styles.dayBtnText}>Push back</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.dayBtn, styles.dayBtnCenter]}
+            onPress={() => setShowDayPicker(!showDayPicker)}
+          >
+            <Text style={styles.dayBtnLabel}>Day {routineDay}</Text>
+            <Text style={styles.dayBtnSub}>{dayName}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.dayBtn} onPress={pushForward}>
+            <Text style={styles.dayBtnText}>Push forward</Text>
+            <Ionicons name="chevron-forward" size={20} color={Colors.primary} />
+          </TouchableOpacity>
+        </View>
+        {showDayPicker && (
+          <View style={styles.dayPicker}>
+            <Text style={styles.dayPickerLabel}>Pick routine day:</Text>
+            <View style={styles.dayPickerRow}>
+              {ROUTINE_DAY_NAMES.map((name, i) => (
+                <TouchableOpacity
+                  key={i}
+                  style={[styles.dayPickerBtn, routineDay === i + 1 && styles.dayPickerBtnActive]}
+                  onPress={() => { setDay(i + 1); setShowDayPicker(false); }}
+                >
+                  <Text style={[styles.dayPickerBtnText, routineDay === i + 1 && styles.dayPickerBtnTextActive]}>
+                    {i + 1}
+                  </Text>
+                  <Text style={[styles.dayPickerBtnSub, routineDay === i + 1 && styles.dayPickerBtnTextActive]}>
+                    {name}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            <TouchableOpacity style={styles.setTodayBtn} onPress={() => { setToToday(); setShowDayPicker(false); }}>
+              <Ionicons name="today-outline" size={16} color={Colors.primary} />
+              <Text style={styles.setTodayText}>Set to today</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* 1. Meditation */}
+        <Section title="1. Meditation" icon="leaf-outline" color={meditation.color}>
+          <View style={styles.sessionCard}>
+            <Text style={styles.sessionTitle}>{meditation.name}</Text>
+            <Text style={styles.sessionDesc}>{meditation.description}</Text>
+            <Text style={styles.durationHint}>~{meditation.duration} min</Text>
+          </View>
+        </Section>
+
+        {/* 2. Breathwork */}
+        <Section title="2. Breathwork" icon="heart-outline" color={breathwork.color}>
+          <View style={[styles.dayCard, breathworkCompleted && styles.dayCardDone]}>
+            <View style={styles.cardHeader}>
+              <View style={breathworkBadgeStyle}>
+                <Ionicons name={breathwork.icon} size={18} color={breathwork.color} />
+              </View>
+              <View style={styles.cardTitles}>
+                <Text style={styles.dayLabel}>Day {breathwork.day}</Text>
+                <Text style={styles.sessionTitle}>{breathwork.title}</Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => toggleComplete(breathwork.day)}
+                style={[styles.checkbox, breathworkCompleted && { backgroundColor: Colors.primary, borderColor: Colors.primary }]}
+              >
+                {breathworkCompleted && <Ionicons name="checkmark" size={14} color={Colors.white} />}
+              </TouchableOpacity>
+            </View>
+            <Text style={styles.description}>{breathwork.description}</Text>
+            <View style={styles.cardFooter}>
+              <View style={styles.durationChip}>
+                <Ionicons name="time-outline" size={13} color={Colors.textSecondary} />
+                <Text style={styles.durationText}>{breathwork.duration} min</Text>
+              </View>
+              {activeBreathworkDay === breathwork.day && (
+                <Text style={[styles.timerDisplay, { color: breathwork.color }]}>{formatTime(timeLeft)}</Text>
+              )}
+              <TouchableOpacity
+                style={[styles.timerBtn, { backgroundColor: activeBreathworkDay === breathwork.day ? Colors.error : breathwork.color }]}
+                onPress={() =>
+                  activeBreathworkDay === breathwork.day
+                    ? stopTimer()
+                    : startBreathworkTimer(breathwork.day, breathwork.duration)
+                }
+              >
+                <Ionicons name={activeBreathworkDay === breathwork.day ? 'stop' : 'play'} size={14} color={Colors.white} />
+                <Text style={styles.timerBtnText}>{activeBreathworkDay === breathwork.day ? 'Stop' : 'Start'}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Section>
+
+        {/* 3. Core Balance */}
+        <Section title="3. Core Balance" icon="body-outline" color={Colors.primary}>
+          <Text style={styles.attributionHint}>Dr. Ryan Peebles — corebalancetraining.com</Text>
+          {CORE_BALANCE.map((ex, i) => (
+            <ExerciseItem key={i} name={ex.name} detail={ex.detail} reps={ex.reps} />
+          ))}
+        </Section>
+
+        {/* 4. G-O-A-T-A Floor */}
+        <Section title="4. G-O-A-T-A Floor" icon="fitness-outline" color={Colors.secondary}>
+          <Text style={styles.attributionHint}>GOATA / Nick Ball — nickballtraining.com</Text>
+          {GOATA_FLOOR.map((ex, i) => (
+            <ExerciseItem key={i} name={ex.name} detail={ex.detail} reps={ex.reps} />
+          ))}
+        </Section>
+
+        {/* 5. Tai Chi / Qigong / Bagua */}
+        <Section title="5. Tai Chi / Qigong / Bagua" icon="leaf-outline" color={Colors.gut}>
+          <View style={styles.sessionCard}>
+            <Text style={styles.sessionTitle}>Day {taiChiDay.day}: {taiChiDay.title}</Text>
+            <Text style={styles.sessionDesc}>{taiChiDay.description}</Text>
+            <TouchableOpacity
+              style={styles.videoLink}
+              onPress={() => Linking.openURL(taiChiDay.videoUrl)}
+            >
+              <Ionicons name="play-circle-outline" size={20} color={Colors.secondary} />
+              <Text style={styles.videoLinkText}>{taiChiDay.videoTitle}</Text>
+            </TouchableOpacity>
+            {taiChiDay.imageUrl && (
+              <TouchableOpacity
+                style={styles.videoLink}
+                onPress={() => Linking.openURL(taiChiDay.imageUrl!)}
+              >
+                <Ionicons name="image-outline" size={20} color={Colors.secondary} />
+                <Text style={styles.videoLinkText}>{taiChiDay.imageCredit}</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        </Section>
+
+        {/* 6. Main Block OR Nervous System & Fascia */}
+        {mainBlockToday ? (
+          <Section title={`6. Warm-up + Main (Day ${mainDay})`} icon="flame-outline" color={Colors.warning}>
+            <Text style={styles.attributionHint}>ATG (Ben Patrick) + GOATA</Text>
+            <Text style={styles.subsectionLabel}>Warm-up</Text>
+            {WARMUP.map((ex, i) => (
+              <ExerciseItem key={`w-${i}`} name={ex.name} detail={ex.detail} reps={ex.reps} />
+            ))}
+            <Text style={[styles.subsectionLabel, { marginTop: 12 }]}>Main exercises</Text>
+            {mainExercises.map((ex, i) => (
+              <ExerciseItem key={`m-${i}`} name={ex.name} detail={ex.detail} reps={ex.reps} />
+            ))}
+          </Section>
+        ) : (
+          <Section title="6. Nervous System & Fascia" icon="pulse-outline" color={Colors.hrv}>
+            <Text style={styles.nsFasciaHint}>Lighter block. Vagal tone, fascia release. ~15–25 min.</Text>
+            {NERVOUS_SYSTEM_FASCIA.map((ex, i) => (
+              <ExerciseItem key={`ns-${i}`} name={ex.name} detail={ex.detail} reps={ex.reps} />
+            ))}
+          </Section>
+        )}
+
+        {/* Longevity cardio (optional, outside morning routine) */}
+        <Section title="Optional: Zone 2 & Zone 5" icon="fitness-outline" color={Colors.energy}>
+          <Text style={styles.subsectionLabel}>For longevity: aerobic base + VO2 max</Text>
+          <View style={styles.cardioRow}>
+            <Text style={styles.cardioTitle}>{LONGEVITY_CARDIO.zone2.title}</Text>
+            <Text style={styles.cardioTarget}>{LONGEVITY_CARDIO.zone2.target}</Text>
+          </View>
+          <Text style={styles.cardioDetail}>{LONGEVITY_CARDIO.zone2.detail}</Text>
+          <View style={styles.chiwalkHint}>
+            <Text style={styles.chiwalkText}>💡 {LONGEVITY_CARDIO.chiwalk.detail}</Text>
+          </View>
+          <View style={[styles.cardioRow, { marginTop: 10 }]}>
+            <Text style={styles.cardioTitle}>{LONGEVITY_CARDIO.zone5.title}</Text>
+            <Text style={styles.cardioTarget}>{LONGEVITY_CARDIO.zone5.target}</Text>
+          </View>
+          <Text style={styles.cardioDetail}>{LONGEVITY_CARDIO.zone5.detail}</Text>
+
+          <Text style={[styles.subsectionLabel, { marginTop: 14 }]}>Vertical load progression</Text>
+          {VERTICAL_LOAD_PROGRESSION.map((v, i) => (
+            <View key={i} style={styles.progressionRow}>
+              <Text style={styles.progressionStage}>{v.stage}</Text>
+              <Text style={styles.progressionDetail}>{v.detail}</Text>
+            </View>
+          ))}
+
+          <Text style={[styles.subsectionLabel, { marginTop: 14 }]}>Balance fun (advanced/medium)</Text>
+          <Text style={styles.balanceFunHint}>Pick up a new balance sport — mix fun with training:</Text>
+          <View style={styles.balanceFunGrid}>
+            {BALANCE_FUN_SPORTS.map((s) => (
+              <View key={s} style={styles.balanceFunChip}>
+                <Text style={styles.balanceFunText}>{s}</Text>
+              </View>
+            ))}
+          </View>
+        </Section>
+
+        {/* Mark routine complete */}
+        <TouchableOpacity
+          style={styles.completeCard}
+          onPress={() => toggleComplete(routineDay)}
+          activeOpacity={0.8}
+        >
           <View
             style={[
-              styles.progressFill,
-              { width: `${(completedCount / PROGRAM.length) * 100}%` },
+              styles.completeCheckbox,
+              progress[routineDay]?.completed && { backgroundColor: Colors.primary, borderColor: Colors.primary },
             ]}
-          />
-        </View>
-        <Text style={styles.progressLabel}>
-          {completedCount} / {PROGRAM.length} days completed
-        </Text>
+          >
+            {progress[routineDay]?.completed && <Ionicons name="checkmark" size={18} color={Colors.white} />}
+          </View>
+          <View style={styles.completeText}>
+            <Text style={styles.completeTitle}>Mark routine complete</Text>
+            <Text style={styles.completeSub}>
+              {progress[routineDay]?.completed ? 'Done for today!' : 'Confirm you finished all sections.'}
+            </Text>
+          </View>
+        </TouchableOpacity>
 
-        {/* ── Day cards ────────────────────────────────────────── */}
-        {PROGRAM.map((session) => {
-          const dayProgress = progress[session.day];
-          const isCompleted = dayProgress?.completed ?? false;
-          const isActive = activeDay === session.day;
+        <TouchableOpacity
+          style={styles.resourcesLink}
+          onPress={() => router.push('/resources')}
+        >
+          <Ionicons name="library-outline" size={18} color={Colors.primary} />
+          <Text style={styles.resourcesLinkText}>Sources & attributions (Core Balance, ATG, GOATA, Tai Chi)</Text>
+        </TouchableOpacity>
 
-          return (
-            <View
-              key={session.day}
-              style={[
-                styles.dayCard,
-                isCompleted && styles.dayCardDone,
-                isActive && styles.dayCardActive,
-              ]}
-            >
-              {/* Card top row */}
-              <View style={styles.cardHeader}>
-                <View style={[styles.dayBadge, { backgroundColor: `${session.color}22` }]}>
-                  <Ionicons name={session.icon} size={18} color={session.color} />
-                </View>
-                <View style={styles.cardTitles}>
-                  <Text style={styles.dayLabel}>Day {session.day}</Text>
-                  <Text style={styles.sessionTitle}>{session.title}</Text>
-                </View>
-                {/* Completion checkbox */}
-                <TouchableOpacity
-                  onPress={() => toggleComplete(session.day)}
-                  style={[
-                    styles.checkbox,
-                    isCompleted && { backgroundColor: Colors.primary, borderColor: Colors.primary },
-                  ]}
-                >
-                  {isCompleted && (
-                    <Ionicons name="checkmark" size={14} color={Colors.white} />
-                  )}
-                </TouchableOpacity>
-              </View>
-
-              {/* Description */}
-              <Text style={styles.description}>{session.description}</Text>
-
-              {/* Duration + timer */}
-              <View style={styles.cardFooter}>
-                <View style={styles.durationChip}>
-                  <Ionicons name="time-outline" size={13} color={Colors.textSecondary} />
-                  <Text style={styles.durationText}>{session.duration / 60} min</Text>
-                </View>
-
-                {/* Timer display when active */}
-                {isActive && (
-                  <Text style={[styles.timerDisplay, { color: session.color }]}>
-                    {formatTime(timeLeft)}
-                  </Text>
-                )}
-
-                {/* Start / Stop button */}
-                <TouchableOpacity
-                  style={[
-                    styles.timerBtn,
-                    { backgroundColor: isActive ? Colors.error : session.color },
-                  ]}
-                  onPress={() =>
-                    isActive
-                      ? stopTimer()
-                      : startTimer(session.day, session.duration)
-                  }
-                >
-                  <Ionicons
-                    name={isActive ? 'stop' : 'play'}
-                    size={14}
-                    color={Colors.white}
-                  />
-                  <Text style={styles.timerBtnText}>
-                    {isActive ? 'Stop' : 'Start'}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-
-              {isCompleted && dayProgress?.completedAt && (
-                <Text style={styles.completedAt}>
-                  ✓ Completed {new Date(dayProgress.completedAt).toLocaleDateString()}
-                </Text>
-              )}
-            </View>
-          );
-        })}
-
-        {/* ── Coming soon teaser ────────────────────────────────── */}
-        <View style={styles.comingSoon}>
-          <Ionicons name="add-circle-outline" size={20} color={Colors.textMuted} />
-          <Text style={styles.comingSoonText}>
-            More programs coming soon: Somatic Release, Yoga Nidra, Cold Exposure Breathing…
-          </Text>
+        <View style={styles.footer}>
+          <Text style={styles.footerText}>Duration by day and energy. Adjust as needed. 🌿</Text>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -274,82 +390,116 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.bg },
   container: { padding: 20, paddingBottom: 40 },
 
-  screenTitle: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: Colors.textPrimary,
-    marginBottom: 4,
-  },
-  screenSub: { color: Colors.textSecondary, fontSize: 13, marginBottom: 16 },
+  screenTitle: { fontSize: 22, fontWeight: '800', color: Colors.textPrimary, marginBottom: 4 },
+  screenSub: { color: Colors.textSecondary, fontSize: 13, marginBottom: 4 },
+  screenSub2: { color: Colors.textMuted, fontSize: 11, marginBottom: 12 },
 
-  progressBar: {
-    height: 6,
-    backgroundColor: Colors.border,
-    borderRadius: 3,
-    marginBottom: 6,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    backgroundColor: Colors.primary,
-    borderRadius: 3,
-  },
-  progressLabel: {
-    color: Colors.textMuted,
-    fontSize: 12,
+  dayControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     marginBottom: 20,
+    gap: 8,
   },
+  dayBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    paddingVertical: 10,
+    paddingHorizontal: 8,
+    backgroundColor: Colors.bgCard,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  dayBtnCenter: { flex: 1.2 },
+  dayBtnText: { color: Colors.primary, fontSize: 12, fontWeight: '600' },
+  dayBtnLabel: { color: Colors.textPrimary, fontSize: 14, fontWeight: '700' },
+  dayBtnSub: { color: Colors.textMuted, fontSize: 11 },
+
+  dayPicker: {
+    backgroundColor: Colors.bgCard,
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  dayPickerLabel: { color: Colors.textSecondary, fontSize: 12, fontWeight: '600', marginBottom: 10 },
+  dayPickerRow: { flexDirection: 'row', gap: 6, marginBottom: 12 },
+  dayPickerBtn: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  dayPickerBtnActive: { backgroundColor: Colors.primary + '33', borderColor: Colors.primary },
+  dayPickerBtnText: { color: Colors.textPrimary, fontSize: 12, fontWeight: '700' },
+  dayPickerBtnSub: { color: Colors.textMuted, fontSize: 9 },
+  dayPickerBtnTextActive: { color: Colors.primary },
+  setTodayBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 8,
+  },
+  setTodayText: { color: Colors.primary, fontSize: 13, fontWeight: '600' },
+
+  section: { marginBottom: 20 },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 10,
+    paddingLeft: 12,
+    borderLeftWidth: 4,
+    borderLeftColor: Colors.primary,
+  },
+  sectionTitle: { fontSize: 16, fontWeight: '700', color: Colors.textPrimary },
+
+  sessionCard: {
+    backgroundColor: Colors.bgCard,
+    borderRadius: 12,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  sessionTitle: { fontSize: 15, fontWeight: '700', color: Colors.textPrimary, marginBottom: 4 },
+  sessionDesc: { color: Colors.textSecondary, fontSize: 13, lineHeight: 18 },
+  durationHint: { color: Colors.textMuted, fontSize: 12, marginTop: 6 },
+  videoLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: Colors.bgCardLight,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  videoLinkText: { color: Colors.secondary, fontSize: 13, fontWeight: '600', flex: 1 },
 
   dayCard: {
     backgroundColor: Colors.bgCard,
     borderRadius: 16,
     padding: 16,
-    marginBottom: 14,
     borderWidth: 1,
     borderColor: Colors.border,
   },
   dayCardDone: { borderColor: `${Colors.primary}66` },
-  dayCardActive: { borderColor: Colors.secondary },
-
-  cardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 10,
-    gap: 10,
-  },
-  dayBadge: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
+  cardHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 10, gap: 10 },
+  dayBadge: { width: 40, height: 40, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
   cardTitles: { flex: 1 },
   dayLabel: { color: Colors.textMuted, fontSize: 11, fontWeight: '600' },
-  sessionTitle: { color: Colors.textPrimary, fontSize: 16, fontWeight: '700' },
-
-  checkbox: {
-    width: 24,
-    height: 24,
-    borderRadius: 6,
-    borderWidth: 2,
-    borderColor: Colors.border,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-
-  description: {
-    color: Colors.textSecondary,
-    fontSize: 13,
-    lineHeight: 18,
-    marginBottom: 12,
-  },
-
-  cardFooter: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
+  description: { color: Colors.textSecondary, fontSize: 13, lineHeight: 18, marginBottom: 12 },
+  cardFooter: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   durationChip: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -360,13 +510,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   durationText: { color: Colors.textSecondary, fontSize: 12 },
-
-  timerDisplay: {
-    fontSize: 20,
-    fontWeight: '800',
-    flex: 1,
-    textAlign: 'center',
-  },
+  timerDisplay: { fontSize: 20, fontWeight: '800', flex: 1, textAlign: 'center' },
   timerBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -377,24 +521,88 @@ const styles = StyleSheet.create({
     marginLeft: 'auto',
   },
   timerBtnText: { color: Colors.white, fontWeight: '700', fontSize: 13 },
-
-  completedAt: {
-    color: Colors.primary,
-    fontSize: 11,
-    marginTop: 8,
-    fontStyle: 'italic',
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: Colors.border,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 
-  comingSoon: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 8,
+  attributionHint: { color: Colors.textMuted, fontSize: 11, fontStyle: 'italic', marginBottom: 8 },
+  subsectionLabel: { color: Colors.textMuted, fontSize: 12, fontWeight: '600', marginBottom: 8 },
+  nsFasciaHint: { color: Colors.textSecondary, fontSize: 13, marginBottom: 12, fontStyle: 'italic' },
+  exerciseRow: {
     backgroundColor: Colors.bgCard,
-    borderRadius: 12,
-    padding: 14,
+    borderRadius: 8,
+    padding: 10,
+    marginBottom: 6,
     borderWidth: 1,
     borderColor: Colors.border,
-    borderStyle: 'dashed',
   },
-  comingSoonText: { color: Colors.textMuted, fontSize: 13, flex: 1 },
+  exerciseName: { fontSize: 14, fontWeight: '600', color: Colors.textPrimary },
+  exerciseDetail: { fontSize: 12, color: Colors.textSecondary, marginTop: 2 },
+
+  cardioRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  cardioTitle: { fontSize: 14, fontWeight: '700', color: Colors.energy },
+  cardioTarget: { fontSize: 12, color: Colors.primary, fontWeight: '600' },
+  cardioDetail: { fontSize: 12, color: Colors.textSecondary, marginTop: 2, lineHeight: 18 },
+  chiwalkHint: { marginTop: 8, paddingLeft: 4 },
+  chiwalkText: { fontSize: 12, color: Colors.textSecondary, fontStyle: 'italic' },
+  completeCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.bgCard,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    gap: 12,
+  },
+  completeCheckbox: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: Colors.border,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  completeText: { flex: 1 },
+  completeTitle: { fontSize: 15, fontWeight: '700', color: Colors.textPrimary },
+  completeSub: { fontSize: 12, color: Colors.textSecondary, marginTop: 2 },
+
+  resourcesLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 16,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    backgroundColor: `${Colors.primary}18`,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: `${Colors.primary}44`,
+  },
+  resourcesLinkText: { fontSize: 12, color: Colors.primary, fontWeight: '600', flex: 1 },
+  progressionRow: { marginBottom: 8 },
+  progressionStage: { fontSize: 13, fontWeight: '600', color: Colors.textPrimary },
+  progressionDetail: { fontSize: 12, color: Colors.textSecondary, marginTop: 2, lineHeight: 17 },
+  balanceFunHint: { fontSize: 12, color: Colors.textSecondary, marginBottom: 8 },
+  balanceFunGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  balanceFunChip: {
+    backgroundColor: Colors.bgCardLight,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  balanceFunText: { fontSize: 11, color: Colors.textSecondary, fontWeight: '600' },
+
+  footer: { marginTop: 20, paddingTop: 16, borderTopWidth: 1, borderTopColor: Colors.border },
+  footerText: { color: Colors.textMuted, fontSize: 12, fontStyle: 'italic' },
 });
