@@ -37,6 +37,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Colors } from '../../constants/Colors';
+import { parseLabText, type ParsedLabResult } from '../../lib/parseLabText';
+import { isBridgeConfigured } from '../../lib/grokBridge';
 
 const STORAGE_KEY = 'blood_work_entries';
 
@@ -143,6 +145,14 @@ export default function BloodWorkScreen() {
   const [entryNotes, setEntryNotes] = useState('');
   const [saving, setSaving] = useState(false);
 
+  // Paste lab results modal
+  const [pasteModalVisible, setPasteModalVisible] = useState(false);
+  const [pastedText, setPastedText] = useState('');
+  const [importing, setImporting] = useState(false);
+  const [importError, setImportError] = useState<string | null>(null);
+
+  const bridgeConfigured = isBridgeConfigured();
+
   useEffect(() => {
     (async () => {
       try {
@@ -188,6 +198,42 @@ export default function BloodWorkScreen() {
     }
   };
 
+  const importPastedLab = async () => {
+    const text = pastedText.trim();
+    if (!text || importing) return;
+    if (!bridgeConfigured) {
+      setImportError('Import uses the Health Coach. Set EXPO_PUBLIC_GROK_BRIDGE_URL in .env.');
+      return;
+    }
+    setImportError(null);
+    setImporting(true);
+    try {
+      const parsed: ParsedLabResult[] = await parseLabText(text);
+      if (parsed.length === 0) {
+        setImportError('No biomarker values found. Try: "glucose 92, vitamin D 45, B12 520"');
+        return;
+      }
+      const date = parsed[0].date ?? new Date().toISOString().slice(0, 10);
+      const newEntries: BiomarkerEntry[] = parsed.map((p) => ({
+        key: p.key,
+        value: String(p.value),
+        date,
+        notes: 'Imported from pasted text',
+        savedAt: new Date().toISOString(),
+      }));
+      const updated = [...newEntries, ...entries];
+      setEntries(updated);
+      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated.filter((e) => e.savedAt)));
+      setPastedText('');
+      setPasteModalVisible(false);
+      Alert.alert('Imported 🔬', `${parsed.length} biomarker(s) added from your pasted text.`);
+    } catch (e: unknown) {
+      setImportError(e instanceof Error ? e.message : 'Import failed. Try again.');
+    } finally {
+      setImporting(false);
+    }
+  };
+
   // Get the most recent entry for a given biomarker key
   const latestEntry = (key: string) =>
     entries.filter((e) => e.key === key).sort((a, b) => b.date.localeCompare(a.date))[0];
@@ -221,14 +267,23 @@ export default function BloodWorkScreen() {
           </View>
         </View>
 
-        {/* ── Add Manual Entry button ────────────────────────── */}
-        <TouchableOpacity
-          style={styles.addBtn}
-          onPress={() => setModalVisible(true)}
-        >
-          <Ionicons name="add-circle-outline" size={20} color={Colors.white} />
-          <Text style={styles.addBtnText}>Add Manual Entry</Text>
-        </TouchableOpacity>
+        {/* ── Add Manual Entry + Paste lab results ────────────────────────── */}
+        <View style={styles.addRow}>
+          <TouchableOpacity style={styles.addBtn} onPress={() => setModalVisible(true)}>
+            <Ionicons name="add-circle-outline" size={20} color={Colors.white} />
+            <Text style={styles.addBtnText}>Add Manual Entry</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.pasteBtn}
+            onPress={() => {
+              setPasteModalVisible(true);
+              setImportError(null);
+            }}
+          >
+            <Ionicons name="document-text-outline" size={20} color={Colors.primary} />
+            <Text style={styles.pasteBtnText}>Paste lab results</Text>
+          </TouchableOpacity>
+        </View>
 
         {/* ── Biomarker Cards ────────────────────────────────── */}
         <Text style={styles.sectionTitle}>Biomarker Overview</Text>
@@ -371,6 +426,55 @@ export default function BloodWorkScreen() {
           </View>
         </View>
       </Modal>
+
+      {/* ── Paste lab results modal ─────────────────────────────────────── */}
+      <Modal
+        visible={pasteModalVisible}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setPasteModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Paste lab results</Text>
+              <TouchableOpacity onPress={() => setPasteModalVisible(false)}>
+                <Ionicons name="close-outline" size={24} color={Colors.textSecondary} />
+              </TouchableOpacity>
+            </View>
+            <Text style={styles.pasteHint}>
+              Paste or type your lab results (e.g. from an email or report). The Coach will extract values and fill the fields.
+            </Text>
+            <Text style={styles.modalLabel}>Lab text</Text>
+            <TextInput
+              style={[styles.modalInput, styles.pasteInput]}
+              placeholder="e.g. Glucose 92, Vitamin D 45 ng/mL, B12 520, Homocysteine 7.2"
+              placeholderTextColor={Colors.textMuted}
+              value={pastedText}
+              onChangeText={(t) => { setPastedText(t); setImportError(null); }}
+              multiline
+              textAlignVertical="top"
+            />
+            {importError ? (
+              <View style={styles.importErrorBox}>
+                <Ionicons name="alert-circle-outline" size={16} color={Colors.error} />
+                <Text style={styles.importErrorText}>{importError}</Text>
+              </View>
+            ) : null}
+            <TouchableOpacity
+              style={[styles.saveBtn, importing && { opacity: 0.6 }]}
+              onPress={importPastedLab}
+              disabled={!pastedText.trim() || importing}
+            >
+              {importing ? (
+                <ActivityIndicator color={Colors.white} />
+              ) : (
+                <Text style={styles.saveBtnText}>Import into Blood Work</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -397,17 +501,32 @@ const styles = StyleSheet.create({
   comingSoonBody: { color: Colors.textSecondary, fontSize: 12, lineHeight: 18 },
 
   addBtn: {
+    flex: 1,
     backgroundColor: Colors.primaryDark,
     borderRadius: 12,
     paddingVertical: 12,
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
     gap: 8,
-    marginBottom: 24,
   },
   addBtnText: { color: Colors.white, fontWeight: '700', fontSize: 15 },
+  addRow: { flexDirection: 'row', gap: 10, marginBottom: 24 },
+  pasteBtn: {
+    flex: 1,
+    backgroundColor: Colors.bgCard,
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 8,
+    borderWidth: 1,
+    borderColor: Colors.primary,
+  },
+  pasteBtnText: { color: Colors.primary, fontWeight: '700', fontSize: 14 },
 
   sectionTitle: {
     color: Colors.textSecondary,
@@ -516,4 +635,17 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   saveBtnText: { color: Colors.white, fontWeight: '700', fontSize: 15 },
+
+  pasteHint: { color: Colors.textSecondary, fontSize: 13, marginBottom: 12, lineHeight: 18 },
+  pasteInput: { height: 120, paddingTop: 12 },
+  importErrorBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#3D1515',
+    borderRadius: 8,
+    padding: 10,
+    marginTop: 12,
+    gap: 6,
+  },
+  importErrorText: { color: Colors.error, fontSize: 13, flex: 1 },
 });

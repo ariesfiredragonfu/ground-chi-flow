@@ -35,6 +35,9 @@ yarn-error.*
 .env.local
 .env*.local
 
+# admin credentials — contains password
+docs/ADMIN_CREDENTIALS.md
+
 # typescript
 *.tsbuildinfo
 

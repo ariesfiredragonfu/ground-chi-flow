@@ -1,46 +1,58 @@
 /**
  * Firebase configuration for GroundChiFlow
  *
- * SETUP INSTRUCTIONS:
- * 1. Go to https://console.firebase.google.com and create a new project
- *    called "GroundChiFlow" (or similar).
- * 2. Enable Authentication → Email/Password in the Firebase console.
- * 3. (Optional) Enable Firestore Database for cloud persistence.
- * 4. In Project Settings → "Your apps" → Add app → Web app (</>),
- *    register the app and copy the firebaseConfig object below.
- * 5. Replace the placeholder values with your actual Firebase credentials.
- * 6. For production, move these to environment variables using
- *    expo-constants or a .env file (never commit real keys to git).
+ * FAIL-SAFE: If Firebase config is missing or invalid, the app still runs.
+ * Auth and Firestore use AsyncStorage fallback when Firebase is unavailable.
  *
- * REQUIRED PACKAGES (already installed):
- *   firebase (^12.x)
- *
- * OPTIONAL — for Firestore persistence on native:
- *   npx expo install @react-native-firebase/app @react-native-firebase/auth
- *   (The modular Firebase JS SDK used here works well for Expo Go / web)
+ * SETUP: Add EXPO_PUBLIC_FIREBASE_* vars to .env for full Firebase features.
  */
 
-import { initializeApp, getApps } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
-import { getFirestore, enableNetwork } from 'firebase/firestore';
+import { initializeApp, getApps, FirebaseApp } from 'firebase/app';
+import { getAuth, Auth } from 'firebase/auth';
+import { getFirestore, enableNetwork, Firestore } from 'firebase/firestore';
 
-// Values come from .env (EXPO_PUBLIC_* vars are auto-exposed by Expo — no extra packages needed)
-const firebaseConfig = {
-  apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
-};
+let app: FirebaseApp | null = null;
+let _auth: Auth | null = null;
+let _db: Firestore | null = null;
+export let firebaseAvailable = false;
 
-// Prevent re-initializing when hot-reloading in development
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+function initFirebase(): boolean {
+  if (app) return firebaseAvailable;
 
-export const auth = getAuth(app);
-export const db = getFirestore(app);
+  const apiKey = process.env.EXPO_PUBLIC_FIREBASE_API_KEY;
+  const projectId = process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID;
 
-// Re-enable network on startup (handles cases where previous session left it disabled)
-enableNetwork(db).catch(() => {});
+  if (!apiKey || !projectId || typeof apiKey !== 'string' || apiKey.length < 10) {
+    return false;
+  }
+
+  try {
+    const firebaseConfig = {
+      apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
+      authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN,
+      projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID,
+      storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET,
+      messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+      appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
+    };
+
+    app = getApps().length === 0 ? initializeApp(firebaseConfig) : (getApps()[0] as FirebaseApp);
+    _auth = getAuth(app);
+    _db = getFirestore(app);
+    enableNetwork(_db).catch(() => {});
+    firebaseAvailable = true;
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+initFirebase();
+
+// Export auth — null when Firebase unavailable
+export const auth: Auth | null = _auth;
+
+// Export db — null when Firebase unavailable (useHealthData checks this)
+export const db: Firestore | null = _db;
 
 export default app;

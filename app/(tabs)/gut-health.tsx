@@ -30,6 +30,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/Colors';
 import { useGutHealthLogs } from '../../hooks/useHealthData';
+import {
+  BIOME_HIERARCHY,
+  GUT_NUTRITION_TIPS,
+  FUELING_FOR_EXERCISE,
+  MEAL_STRUCTURE,
+  GUT_DIVERSITY_TIPS,
+} from '../../constants/GutNutrition';
 
 // ── Probiotic/fermented food options ────────────────────────────────────────
 const FOOD_OPTIONS = [
@@ -124,17 +131,71 @@ export default function GutHealthScreen() {
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
-        <Text style={styles.screenTitle}>Gut Health Log</Text>
+        <Text style={styles.screenTitle}>Gut Health & Meals</Text>
         <Text style={styles.screenSub}>
-          Track probiotic foods, mood & energy daily to spot patterns.
+          Fuel your routines. Track probiotic foods, mood & energy to spot patterns.
         </Text>
+
+        {/* ── Meals & Nutrition Guide ─────────────────────────── */}
+        <View style={styles.guideCard}>
+          <Text style={styles.guideTitle}>🥗 Meals & Nutrition</Text>
+          <Text style={styles.guideSub}>Digestion + fueling for exercise</Text>
+
+          <Text style={styles.guideSection}>Biome first</Text>
+          <View style={styles.biomeRow}>
+            <Text style={styles.biomeTitle}>{BIOME_HIERARCHY.first.title}</Text>
+            <Text style={styles.biomeDetail}>{BIOME_HIERARCHY.first.detail}</Text>
+          </View>
+          <View style={styles.biomeRow}>
+            <Text style={styles.biomeTitle}>{BIOME_HIERARCHY.ifNeeded.title}</Text>
+            <Text style={styles.biomeDetail}>{BIOME_HIERARCHY.ifNeeded.detail}</Text>
+          </View>
+
+          <Text style={styles.guideSection}>Diversify your gut</Text>
+          {GUT_DIVERSITY_TIPS.map((t, i) => (
+            <Text key={i} style={styles.diversityTip}>• {t}</Text>
+          ))}
+
+          <Text style={styles.guideSection}>5 keys to gut health</Text>
+          {GUT_NUTRITION_TIPS.map((tip) => (
+            <View key={tip.id} style={styles.tipRow}>
+              <Ionicons name={tip.icon} size={18} color={Colors.gut} />
+              <View style={styles.tipContent}>
+                <Text style={styles.tipTitle}>{tip.title}</Text>
+                <Text style={styles.tipDetail}>{tip.detail}</Text>
+              </View>
+            </View>
+          ))}
+
+          <Text style={styles.guideSection}>Fueling for routines</Text>
+          <View style={styles.fuelRow}>
+            <Text style={styles.fuelTitle}>{FUELING_FOR_EXERCISE.before.title}</Text>
+            <Text style={styles.fuelDetail}>{FUELING_FOR_EXERCISE.before.detail}</Text>
+          </View>
+          <View style={styles.fuelRow}>
+            <Text style={styles.fuelTitle}>{FUELING_FOR_EXERCISE.after.title}</Text>
+            <Text style={styles.fuelDetail}>{FUELING_FOR_EXERCISE.after.detail}</Text>
+          </View>
+          <View style={styles.fuelRow}>
+            <Text style={styles.fuelTitle}>{FUELING_FOR_EXERCISE.daily.title}</Text>
+            <Text style={styles.fuelDetail}>{FUELING_FOR_EXERCISE.daily.detail}</Text>
+          </View>
+
+          <Text style={styles.guideSection}>Meal structure</Text>
+          {MEAL_STRUCTURE.map((m) => (
+            <View key={m.meal} style={styles.mealRow}>
+              <Text style={styles.mealName}>{m.meal}</Text>
+              <Text style={styles.mealExamples}>{m.examples}</Text>
+            </View>
+          ))}
+        </View>
 
         {/* ── Form Card ───────────────────────────────────────── */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>📅 Today — {todayKey()}</Text>
 
           {/* Food selection */}
-          <Text style={styles.sectionLabel}>Probiotic / Fermented Foods</Text>
+          <Text style={styles.sectionLabel}>Biome / Fermented Foods (log daily)</Text>
           <View style={styles.foodGrid}>
             {FOOD_OPTIONS.map((food) => {
               const selected = selectedFoods.includes(food);
@@ -296,7 +357,41 @@ const styles = StyleSheet.create({
     color: Colors.textPrimary,
     marginBottom: 4,
   },
-  screenSub: { color: Colors.textSecondary, fontSize: 13, marginBottom: 20 },
+  screenSub: { color: Colors.textSecondary, fontSize: 13, marginBottom: 16 },
+
+  guideCard: {
+    backgroundColor: Colors.bgCard,
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    marginBottom: 20,
+  },
+  guideTitle: { fontSize: 17, fontWeight: '800', color: Colors.textPrimary, marginBottom: 2 },
+  guideSub: { color: Colors.textSecondary, fontSize: 12, marginBottom: 14 },
+  guideSection: {
+    color: Colors.gut,
+    fontSize: 12,
+    fontWeight: '700',
+    marginTop: 14,
+    marginBottom: 6,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  tipRow: { flexDirection: 'row', gap: 10, marginBottom: 8 },
+  tipContent: { flex: 1 },
+  tipTitle: { fontSize: 13, fontWeight: '600', color: Colors.textPrimary },
+  tipDetail: { fontSize: 12, color: Colors.textSecondary, marginTop: 2, lineHeight: 17 },
+  fuelRow: { marginBottom: 10 },
+  fuelTitle: { fontSize: 13, fontWeight: '600', color: Colors.textPrimary },
+  fuelDetail: { fontSize: 12, color: Colors.textSecondary, marginTop: 2, lineHeight: 17 },
+  mealRow: { marginBottom: 6 },
+  mealName: { fontSize: 13, fontWeight: '600', color: Colors.textPrimary },
+  mealExamples: { fontSize: 12, color: Colors.textSecondary, marginTop: 2, fontStyle: 'italic' },
+  biomeRow: { marginBottom: 10 },
+  biomeTitle: { fontSize: 13, fontWeight: '600', color: Colors.textPrimary },
+  biomeDetail: { fontSize: 12, color: Colors.textSecondary, marginTop: 2, lineHeight: 17 },
+  diversityTip: { fontSize: 12, color: Colors.textSecondary, marginBottom: 4, lineHeight: 17 },
 
   card: {
     backgroundColor: Colors.bgCard,
