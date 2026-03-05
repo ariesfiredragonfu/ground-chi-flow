@@ -22,6 +22,11 @@ function getBridgeUrl(): string {
   return DEFAULT_BRIDGE_URL;
 }
 
+/** Exported so Coach UI can show which bridge URL is in use (debug). */
+export function getBridgeUrlForDisplay(): string {
+  return getBridgeUrl().replace(/\/$/, '');
+}
+
 /**
  * Send messages to the Grok bridge; returns the assistant reply or throws.
  */

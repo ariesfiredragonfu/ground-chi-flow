@@ -18,7 +18,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { sendToAgent, isBridgeConfigured } from '../../lib/grokBridge';
+import { sendToAgent, isBridgeConfigured, getBridgeUrlForDisplay } from '../../lib/grokBridge';
 import type { ChatMessage } from '../../lib/grokBridge';
 import { HEALTH_AGENT_SYSTEM_PROMPT } from '../../constants/AgentPrompt';
 import { Colors } from '../../constants/Colors';
@@ -126,7 +126,7 @@ export default function AgentScreen() {
           raw.toLowerCase().includes('timeout'));
       setError(
         isNetwork
-          ? "Can't reach the Coach right now. The app talks to your Grok bridge — on a phone, use the same WiFi as the computer running the bridge, or try the web version of the app. For lab results, use the Blood Work tab → \"Paste lab results\" and paste the text from your paperwork."
+          ? "Can't reach the Coach right now. The app needs the Grok bridge to be reachable. If you use the web app, open it in the browser and refresh so it uses the latest bridge URL (e.g. Railway). On a phone, try the web version in the browser. Lab results: Blood Work tab → \"Paste lab results\"."
           : raw
       );
     } finally {
@@ -149,6 +149,9 @@ export default function AgentScreen() {
           </View>
           <Text style={styles.headerSub}>
             Ask about diet, exercise, meditation, herbs, or how to use the app.
+          </Text>
+          <Text style={styles.bridgeUrl} numberOfLines={1}>
+            Bridge: {getBridgeUrlForDisplay()}
           </Text>
         </View>
 
@@ -266,6 +269,7 @@ const styles = StyleSheet.create({
   headerTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 },
   headerTitle: { fontSize: 20, fontWeight: '800', color: Colors.textPrimary },
   headerSub: { fontSize: 13, color: Colors.textSecondary },
+  bridgeUrl: { fontSize: 11, color: Colors.textMuted, marginTop: 4 },
 
   scroll: { flex: 1 },
   scrollContent: { padding: 16, paddingBottom: 24 },
