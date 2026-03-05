@@ -14,7 +14,7 @@ export interface GrokBridgeResponse {
   error?: string;
 }
 
-const DEFAULT_BRIDGE_URL = 'https://grok.howell-forge.com';
+const DEFAULT_BRIDGE_URL = 'https://bridge-production-f118.up.railway.app';
 
 function getBridgeUrl(): string {
   const url = process.env.EXPO_PUBLIC_GROK_BRIDGE_URL;
