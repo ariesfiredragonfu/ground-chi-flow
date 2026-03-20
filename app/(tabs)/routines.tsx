@@ -27,6 +27,12 @@ import { Colors } from '../../constants/Colors';
 import { useRoutineProgress, useRoutineDay } from '../../hooks/useHealthData';
 import { useExerciseSettings } from '../../hooks/useExerciseSettings';
 import {
+  shouldShowPtRehabSection,
+  buildPtRehabContextLines,
+  buildPtRehabExerciseRows,
+  buildPtRehabExtraNotes,
+} from '../../lib/buildPtRehabSection';
+import {
   MEDITATIONS,
   BREATHWORK,
   CORE_BALANCE,
@@ -240,7 +246,7 @@ export default function RoutinesScreen() {
   const mainBlockToday = isMainBlockDay(routineDay);
   const mainDay = getMainExerciseDay(routineDay);
   const mainExercises = getMainExercises(mainDay);
-  const { loading: loadingExerciseSettings, needsSelection, level, source, setLevel } = useExerciseSettings();
+  const { loading: loadingExerciseSettings, needsSelection, level, source, setLevel, settings } = useExerciseSettings();
 
   const [activeBreathworkDay, setActiveBreathworkDay] = useState<number | null>(null);
   const [timeLeft, setTimeLeft] = useState(0);
@@ -353,6 +359,15 @@ export default function RoutinesScreen() {
 
   const faceExercises = pickTwoLadderExercises(MEWING_FACE_EXERCISES_BY_LEVEL[level] || MEWING_FACE_EXERCISES_BY_LEVEL.beginner);
   const neckExercises = pickTwoLadderExercises(NECK_EXERCISES_BY_LEVEL[level] || NECK_EXERCISES_BY_LEVEL.beginner);
+
+  const ptProgram = settings.ptProgram;
+  const showPtRehab = shouldShowPtRehabSection(source, ptProgram);
+  const ptRehabRows =
+    showPtRehab && ptProgram ? buildPtRehabExerciseRows(ptProgram) : [];
+  const ptRehabContext =
+    showPtRehab && ptProgram ? buildPtRehabContextLines(ptProgram) : [];
+  const ptRehabExtras =
+    showPtRehab && ptProgram ? buildPtRehabExtraNotes(ptProgram) : [];
 
   const mudras = routineDay === 1 ? HAND_MUDRAS_DAY_1 : routineDay === 3 ? HAND_MUDRAS_DAY_3 : HAND_MUDRAS_DAY_5;
   const feet = routineDay === 1 ? FOOT_EXERCISES_DAY_1 : routineDay === 3 ? FOOT_EXERCISES_DAY_3 : FOOT_EXERCISES_DAY_5;
@@ -597,6 +612,50 @@ export default function RoutinesScreen() {
             </View>
           </View>
         </Section>
+
+        {/* PT rehab from handoff (Firestore ptHandoffRequests → useExerciseSettings) */}
+        {showPtRehab && ptProgram ? (
+          <Section title="Your PT rehab program" icon="medkit-outline" color={Colors.hrv}>
+            <Text style={styles.attributionHint}>
+              From your physical therapist handoff — follow their guidance first; this does not replace medical care.
+            </Text>
+            {ptRehabContext.length > 0 ? (
+              <View style={{ marginBottom: 10 }}>
+                {ptRehabContext.map((line, i) => (
+                  <Text key={`pt-ctx-${i}`} style={styles.screenSub2}>
+                    {line}
+                  </Text>
+                ))}
+              </View>
+            ) : null}
+            {ptRehabRows.length > 0 ? (
+              ptRehabRows.map((ex, i) => (
+                <ExerciseItem
+                  key={`pt-rehab-${i}-${ex.name}`}
+                  name={ex.name}
+                  detail={ex.detail}
+                  reps={ex.reps}
+                  onTimerComplete={onExerciseTimerComplete}
+                  autoEasier={level === 'beginner'}
+                />
+              ))
+            ) : (
+              <Text style={styles.screenSub}>
+                Your PT program is on file. When your therapist includes custom exercises in the handoff export, they
+                will list here. Keep following any instructions they gave you outside the app.
+              </Text>
+            )}
+            {ptRehabExtras.length > 0 ? (
+              <View style={{ marginTop: 12 }}>
+                {ptRehabExtras.map((line, i) => (
+                  <Text key={`pt-extra-${i}`} style={[styles.screenSub2, i > 0 ? { marginTop: 6 } : undefined]}>
+                    {line}
+                  </Text>
+                ))}
+              </View>
+            ) : null}
+          </Section>
+        ) : null}
 
         {/* 3. Mewing & Face (Level-based) */}
         <Section title="Mewing & Face (Level-based)" icon="body-outline" color={Colors.primary}>
