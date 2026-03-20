@@ -18,6 +18,15 @@ export interface ExerciseSettings {
   level: ExerciseLevel;
   source: ExerciseSource;
   updatedAt: string | null;
+  ptProgram?: {
+    protocolKey?: string;
+    protocolSeverity?: string;
+    phaseKeys?: string[];
+    customExercises?: Array<{ name: string; dosage?: string; rom_limit?: string }>;
+    customNutritionNotes?: string;
+    redFlagWatchlist?: string[];
+    ptAuthor?: string;
+  } | null;
 }
 
 const AS_EXERCISE_SETTINGS_KEY = 'exercise_settings_v1';
@@ -46,6 +55,7 @@ export function useExerciseSettings() {
     level: 'beginner',
     source: user?.uid === 'guest' ? 'guest' : 'signup',
     updatedAt: null,
+    ptProgram: null,
   });
 
   useEffect(() => {
@@ -68,10 +78,11 @@ export function useExerciseSettings() {
               level,
               source: parsed.source ?? 'guest',
               updatedAt: parsed.updatedAt ?? null,
+              ptProgram: parsed.ptProgram ?? null,
             });
             setNeedsSelection(false);
           } else {
-            setSettings({ level: 'beginner', source: 'guest', updatedAt: null });
+            setSettings({ level: 'beginner', source: 'guest', updatedAt: null, ptProgram: null });
             setNeedsSelection(true);
           }
           return;
@@ -90,6 +101,7 @@ export function useExerciseSettings() {
             level,
             source: (data.source as ExerciseSource) ?? 'user',
             updatedAt: data.updatedAt ?? null,
+            ptProgram: data.ptProgram ?? null,
           });
           setNeedsSelection(false);
           return;
@@ -103,9 +115,31 @@ export function useExerciseSettings() {
           if (cancelled) return;
 
           if (ptSnap.exists()) {
-            const ptData = ptSnap.data() as Partial<{ level: ExerciseLevel }>;
+            const ptData = ptSnap.data() as Partial<{
+              level: ExerciseLevel;
+              protocolKey: string;
+              protocolSeverity: string;
+              phaseKeys: string[];
+              customExercises: Array<{ name: string; dosage?: string; rom_limit?: string }>;
+              customNutritionNotes: string;
+              redFlagWatchlist: string[];
+              ptAuthor: string;
+            }>;
             const ptLevel = isValidLevel(ptData.level) ? ptData.level : 'beginner';
-            setSettings({ level: ptLevel, source: 'pt', updatedAt: null });
+            setSettings({
+              level: ptLevel,
+              source: 'pt',
+              updatedAt: null,
+              ptProgram: {
+                protocolKey: ptData.protocolKey,
+                protocolSeverity: ptData.protocolSeverity,
+                phaseKeys: ptData.phaseKeys,
+                customExercises: ptData.customExercises,
+                customNutritionNotes: ptData.customNutritionNotes,
+                redFlagWatchlist: ptData.redFlagWatchlist,
+                ptAuthor: ptData.ptAuthor,
+              },
+            });
             // PT already picked an initial level; do not force signup selection.
             setNeedsSelection(false);
             return;
@@ -113,12 +147,12 @@ export function useExerciseSettings() {
         }
 
         // Neither user settings nor PT handoff found → ask the client
-        setSettings({ level: 'beginner', source: 'signup', updatedAt: null });
+        setSettings({ level: 'beginner', source: 'signup', updatedAt: null, ptProgram: null });
         setNeedsSelection(true);
       } catch {
         // If anything fails, keep the app usable by defaulting to beginner.
         if (cancelled) return;
-        setSettings({ level: 'beginner', source: user?.uid === 'guest' ? 'guest' : 'signup', updatedAt: null });
+        setSettings({ level: 'beginner', source: user?.uid === 'guest' ? 'guest' : 'signup', updatedAt: null, ptProgram: null });
         setNeedsSelection(true);
       } finally {
         if (!cancelled) setLoading(false);

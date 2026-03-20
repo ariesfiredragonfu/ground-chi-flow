@@ -351,10 +351,12 @@ export function useVitals() {
   const saveVitals = useCallback(
     async (date: string, data: Partial<Omit<VitalsEntry, 'date' | 'savedAt'>>): Promise<void> => {
       const savedAt = new Date().toISOString();
+      // Regression guard: never allow caller payload to overwrite canonical date/savedAt fields.
+      const { date: _ignoredDate, savedAt: _ignoredSavedAt, ...safeData } = (data as Partial<VitalsEntry>);
       const entry: VitalsEntry = {
-        date,
         ...vitalsByDate[date],
-        ...data,
+        ...safeData,
+        date,
         savedAt,
       };
       setVitalsByDate((prev) => ({ ...prev, [date]: entry }));
