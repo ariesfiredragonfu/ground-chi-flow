@@ -71,6 +71,10 @@ function inferDurationSeconds(detail: string | null, reps: string | null): numbe
   return n;
 }
 
+function optionalString(value: unknown): string | undefined {
+  return typeof value === 'string' ? value : undefined;
+}
+
 
 // ── Section component ───────────────────────────────────────────────────────
 function Section({
@@ -232,13 +236,52 @@ export default function RoutinesScreen() {
   const [activeBreathworkDay, setActiveBreathworkDay] = useState<number | null>(null);
   const [timeLeft, setTimeLeft] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [activeMeditationTimer, setActiveMeditationTimer] = useState(false);
+  const [meditationTimeLeft, setMeditationTimeLeft] = useState(0);
+  const meditationTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const breathKeepAwakeTag = 'gcf-breathwork-timer';
+  const medKeepAwakeTag = 'gcf-meditation-timer';
   const completionSoundRef = useRef<Audio.Sound | null>(null);
   const [showDayPicker, setShowDayPicker] = useState(false);
   const levelPromptedRef = useRef(false);
 
   useEffect(() => {
+    Audio.setAudioModeAsync({
+      playsInSilentModeIOS: true,
+      staysActiveInBackground: false,
+      shouldDuckAndroid: true,
+      playThroughEarpieceAndroid: false,
+    }).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (!activeBreathworkDay) {
+      void deactivateKeepAwake(breathKeepAwakeTag);
+      return;
+    }
+    activateKeepAwakeAsync(breathKeepAwakeTag).catch(() => {});
+    return () => {
+      void deactivateKeepAwake(breathKeepAwakeTag);
+    };
+  }, [activeBreathworkDay]);
+
+  useEffect(() => {
+    if (!activeMeditationTimer) {
+      void deactivateKeepAwake(medKeepAwakeTag);
+      return;
+    }
+    activateKeepAwakeAsync(medKeepAwakeTag).catch(() => {});
+    return () => {
+      void deactivateKeepAwake(medKeepAwakeTag);
+    };
+  }, [activeMeditationTimer]);
+
+  useEffect(() => {
     return () => {
       clearInterval(timerRef.current!);
+      clearInterval(meditationTimerRef.current!);
+      deactivateKeepAwake(breathKeepAwakeTag);
+      deactivateKeepAwake(medKeepAwakeTag);
       if (completionSoundRef.current) {
         completionSoundRef.current.unloadAsync().catch(() => {});
       }
@@ -304,6 +347,30 @@ export default function RoutinesScreen() {
 
   const mudras = routineDay === 1 ? HAND_MUDRAS_DAY_1 : routineDay === 3 ? HAND_MUDRAS_DAY_3 : HAND_MUDRAS_DAY_5;
   const feet = routineDay === 1 ? FOOT_EXERCISES_DAY_1 : routineDay === 3 ? FOOT_EXERCISES_DAY_3 : FOOT_EXERCISES_DAY_5;
+  const qigongRegressionByDay: Record<number, { title: string; videoUrl: string; videoTitle: string }> = {
+    1: { title: 'Qigong regression: 8 Brocades basics', videoUrl: TAI_CHI_QI_GONG_BAGUA[1].videoUrl, videoTitle: TAI_CHI_QI_GONG_BAGUA[1].videoTitle },
+    3: { title: 'Qigong regression: standing + breath flow', videoUrl: TAI_CHI_QI_GONG_BAGUA[4].videoUrl, videoTitle: TAI_CHI_QI_GONG_BAGUA[4].videoTitle },
+    4: { title: 'Qigong regression: 8 Brocades basics', videoUrl: TAI_CHI_QI_GONG_BAGUA[1].videoUrl, videoTitle: TAI_CHI_QI_GONG_BAGUA[1].videoTitle },
+    6: { title: 'Qigong regression: standing + breath flow', videoUrl: TAI_CHI_QI_GONG_BAGUA[4].videoUrl, videoTitle: TAI_CHI_QI_GONG_BAGUA[4].videoTitle },
+    7: { title: 'Qigong regression: 8 Brocades basics', videoUrl: TAI_CHI_QI_GONG_BAGUA[1].videoUrl, videoTitle: TAI_CHI_QI_GONG_BAGUA[1].videoTitle },
+  };
+  const qigongRegression = qigongRegressionByDay[taiChiDay.day];
+
+  const playDoneSound = useCallback(async () => {
+    try {
+      if (completionSoundRef.current) {
+        await completionSoundRef.current.unloadAsync();
+        completionSoundRef.current = null;
+      }
+      const { sound } = await Audio.Sound.createAsync({
+        uri: 'https://www.soundjay.com/buttons/sounds/button-3.mp3',
+      });
+      completionSoundRef.current = sound;
+      await sound.playAsync();
+    } catch {
+      // Keep UI flow even if sound fails.
+    }
+  }, []);
 
   const startBreathworkTimer = useCallback((day: number, duration: number) => {
     clearInterval(timerRef.current!);
@@ -314,6 +381,7 @@ export default function RoutinesScreen() {
         if (prev <= 1) {
           clearInterval(timerRef.current!);
           setActiveBreathworkDay(null);
+          deactivateKeepAwake(breathKeepAwakeTag);
           markDay(day, true);
           playDoneSound().catch(() => {});
           Alert.alert('Breathwork Complete! 🌿', `Day ${day} done. Great work!`);
@@ -322,33 +390,44 @@ export default function RoutinesScreen() {
         return prev - 1;
       });
     }, 1000);
-  }, [markDay]);
+  }, [markDay, playDoneSound]);
 
   const stopTimer = useCallback(() => {
     clearInterval(timerRef.current!);
     setActiveBreathworkDay(null);
     setTimeLeft(0);
+    deactivateKeepAwake(breathKeepAwakeTag);
+  }, []);
+
+  const startMeditationTimer = useCallback((duration: number) => {
+    clearInterval(meditationTimerRef.current!);
+    setActiveMeditationTimer(true);
+    setMeditationTimeLeft(duration * 60);
+    meditationTimerRef.current = setInterval(() => {
+      setMeditationTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(meditationTimerRef.current!);
+          setActiveMeditationTimer(false);
+          deactivateKeepAwake(medKeepAwakeTag);
+          playDoneSound().catch(() => {});
+          Alert.alert('Meditation Complete 🌿', `${meditation.name} done. Nice focus.`);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  }, [meditation.name, playDoneSound]);
+
+  const stopMeditationTimer = useCallback(() => {
+    clearInterval(meditationTimerRef.current!);
+    setActiveMeditationTimer(false);
+    setMeditationTimeLeft(0);
+    deactivateKeepAwake(medKeepAwakeTag);
   }, []);
 
   const toggleComplete = useCallback((day: number) => {
     markDay(day, !progress[day]?.completed);
   }, [progress, markDay]);
-
-  const playDoneSound = useCallback(async () => {
-    try {
-      if (completionSoundRef.current) {
-        await completionSoundRef.current.unloadAsync();
-        completionSoundRef.current = null;
-      }
-      const { sound } = await Audio.Sound.createAsync({
-        uri: 'https://actions.google.com/sounds/v1/alarms/beep_short.ogg',
-      });
-      completionSoundRef.current = sound;
-      await sound.playAsync();
-    } catch {
-      // Keep UI flow even if sound fails.
-    }
-  }, []);
 
   const onExerciseTimerComplete = useCallback(
     async (exerciseName: string) => {
@@ -443,6 +522,26 @@ export default function RoutinesScreen() {
             <Text style={styles.sessionTitle}>{meditation.name}</Text>
             <Text style={styles.sessionDesc}>{meditation.description}</Text>
             <Text style={styles.durationHint}>~{meditation.duration} min</Text>
+            <View style={[styles.cardFooter, { marginTop: 10 }]}>
+              <View style={styles.durationChip}>
+                <Ionicons name="time-outline" size={13} color={Colors.textSecondary} />
+                <Text style={styles.durationText}>{meditation.duration} min</Text>
+              </View>
+              {activeMeditationTimer ? (
+                <Text style={[styles.timerDisplay, { color: meditation.color }]}>{formatTime(meditationTimeLeft)}</Text>
+              ) : null}
+              <TouchableOpacity
+                style={[styles.timerBtn, { backgroundColor: activeMeditationTimer ? Colors.error : meditation.color }]}
+                onPress={() =>
+                  activeMeditationTimer
+                    ? stopMeditationTimer()
+                    : startMeditationTimer(meditation.duration)
+                }
+              >
+                <Ionicons name={activeMeditationTimer ? 'stop' : 'play'} size={14} color={Colors.white} />
+                <Text style={styles.timerBtnText}>{activeMeditationTimer ? 'Stop' : 'Start'}</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </Section>
 
@@ -554,7 +653,7 @@ export default function RoutinesScreen() {
         <Section title="3. Core Balance" icon="body-outline" color={Colors.primary}>
           <Text style={styles.attributionHint}>Dr. Ryan Peebles — corebalancetraining.com</Text>
           {CORE_BALANCE.map((ex, i) => (
-            <ExerciseItem key={i} name={ex.name} detail={ex.detail} reps={ex.reps} videoUrl={'videoUrl' in ex ? ex.videoUrl : undefined} learnMoreUrl={'learnMoreUrl' in ex ? ex.learnMoreUrl : undefined} onTimerComplete={onExerciseTimerComplete} />
+            <ExerciseItem key={i} name={ex.name} detail={ex.detail} reps={ex.reps} videoUrl={'videoUrl' in ex ? optionalString(ex.videoUrl) : undefined} learnMoreUrl={'learnMoreUrl' in ex ? optionalString(ex.learnMoreUrl) : undefined} onTimerComplete={onExerciseTimerComplete} />
           ))}
         </Section>
 
@@ -562,12 +661,12 @@ export default function RoutinesScreen() {
         <Section title="4. G-O-A-T-A Floor" icon="fitness-outline" color={Colors.secondary}>
           <Text style={styles.attributionHint}>GOATA / Nick Ball — nickballtraining.com</Text>
           {GOATA_FLOOR.map((ex, i) => (
-            <ExerciseItem key={i} name={ex.name} detail={ex.detail} reps={ex.reps} videoUrl={'videoUrl' in ex ? ex.videoUrl : undefined} learnMoreUrl={'learnMoreUrl' in ex ? ex.learnMoreUrl : undefined} onTimerComplete={onExerciseTimerComplete} />
+            <ExerciseItem key={i} name={ex.name} detail={ex.detail} reps={ex.reps} videoUrl={'videoUrl' in ex ? optionalString(ex.videoUrl) : undefined} learnMoreUrl={'learnMoreUrl' in ex ? optionalString(ex.learnMoreUrl) : undefined} onTimerComplete={onExerciseTimerComplete} />
           ))}
         </Section>
 
-        {/* 5. Qigong & Tai Chi */}
-        <Section title="5. Qigong & Tai Chi" icon="leaf-outline" color={Colors.gut}>
+        {/* 5. Qigong → Tai Chi */}
+        <Section title="5. Qigong → Tai Chi" icon="leaf-outline" color={Colors.gut}>
           <View style={styles.qigongIntro}>
             <Text style={styles.qigongIntroText}>{QIGONG_TAICHI_INTRO}</Text>
           </View>
@@ -591,26 +690,42 @@ export default function RoutinesScreen() {
               </TouchableOpacity>
             )}
           </View>
+          {qigongRegression ? (
+            <View style={styles.sessionCard}>
+              <Text style={styles.sessionTitle}>Beginner regression (Qigong first step)</Text>
+              <Text style={styles.sessionDesc}>
+                Start with a simpler Qigong drill before this day&apos;s Tai Chi/Bagua form to learn detail slower.
+              </Text>
+              <Text style={styles.sessionDesc}>{qigongRegression.title}</Text>
+              <TouchableOpacity
+                style={styles.videoLink}
+                onPress={() => Linking.openURL(qigongRegression.videoUrl)}
+              >
+                <Ionicons name="play-circle-outline" size={20} color={Colors.secondary} />
+                <Text style={styles.videoLinkText}>{qigongRegression.videoTitle}</Text>
+              </TouchableOpacity>
+            </View>
+          ) : null}
         </Section>
 
         {/* 6. Main Block OR Nervous System & Fascia */}
         {mainBlockToday ? (
           <Section title={`6. Warm-up + Main (Day ${mainDay})`} icon="flame-outline" color={Colors.warning}>
-            <Text style={styles.attributionHint}>ATG (Ben Patrick) + GOATA</Text>
+            <Text style={styles.attributionHint}>Knees-over-toes style + GOATA</Text>
             <Text style={styles.subsectionLabel}>Warm-up</Text>
             {WARMUP.map((ex, i) => (
-              <ExerciseItem key={`w-${i}`} name={ex.name} detail={ex.detail} reps={ex.reps} videoUrl={'videoUrl' in ex ? ex.videoUrl : undefined} learnMoreUrl={'learnMoreUrl' in ex ? ex.learnMoreUrl : undefined} onTimerComplete={onExerciseTimerComplete} />
+              <ExerciseItem key={`w-${i}`} name={ex.name} detail={ex.detail} reps={ex.reps} videoUrl={'videoUrl' in ex ? optionalString(ex.videoUrl) : undefined} learnMoreUrl={'learnMoreUrl' in ex ? optionalString(ex.learnMoreUrl) : undefined} onTimerComplete={onExerciseTimerComplete} />
             ))}
             <Text style={[styles.subsectionLabel, { marginTop: 12 }]}>Main exercises</Text>
             {mainExercises.map((ex, i) => (
-              <ExerciseItem key={`m-${i}`} name={ex.name} detail={ex.detail} reps={ex.reps} videoUrl={'videoUrl' in ex ? ex.videoUrl : undefined} learnMoreUrl={'learnMoreUrl' in ex ? ex.learnMoreUrl : undefined} regression={MAIN_EXERCISE_REGRESSIONS[ex.name]} onTimerComplete={onExerciseTimerComplete} />
+              <ExerciseItem key={`m-${i}`} name={ex.name} detail={ex.detail} reps={ex.reps} videoUrl={'videoUrl' in ex ? optionalString(ex.videoUrl) : undefined} learnMoreUrl={'learnMoreUrl' in ex ? optionalString(ex.learnMoreUrl) : undefined} regression={MAIN_EXERCISE_REGRESSIONS[ex.name]} onTimerComplete={onExerciseTimerComplete} />
             ))}
           </Section>
         ) : (
           <Section title="6. Nervous System & Fascia" icon="pulse-outline" color={Colors.hrv}>
             <Text style={styles.nsFasciaHint}>Lighter block. Vagal tone, fascia release. ~15–25 min.</Text>
             {NERVOUS_SYSTEM_FASCIA.map((ex, i) => (
-              <ExerciseItem key={`ns-${i}`} name={ex.name} detail={ex.detail} reps={ex.reps} videoUrl={'videoUrl' in ex ? ex.videoUrl : undefined} learnMoreUrl={'learnMoreUrl' in ex ? ex.learnMoreUrl : undefined} onTimerComplete={onExerciseTimerComplete} />
+              <ExerciseItem key={`ns-${i}`} name={ex.name} detail={ex.detail} reps={ex.reps} videoUrl={'videoUrl' in ex ? optionalString(ex.videoUrl) : undefined} learnMoreUrl={'learnMoreUrl' in ex ? optionalString(ex.learnMoreUrl) : undefined} onTimerComplete={onExerciseTimerComplete} />
             ))}
           </Section>
         )}

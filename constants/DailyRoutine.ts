@@ -70,7 +70,7 @@ export const GOATA_FLOOR = [
 // Free, shareable tutorials. Tap to open in browser.
 // Qigong = foundation (single movements that build chi). Tai Chi = flowing form that combines them.
 export const QIGONG_TAICHI_INTRO =
-  'Qigong is the foundation — simple, single movements that build and cultivate chi. Tai Chi is when you put those movements together in a flowing form. Start with Qigong days to build the basics; Tai Chi forms flow from there.';
+  'Qigong is the first step and foundation — simple, single movements that build and cultivate chi. Tai Chi is when you put those movements together into a flowing form. Start with Qigong days to build the basics; Tai Chi forms flow from there.';
 
 export const TAI_CHI_QI_GONG_BAGUA = [
   {
@@ -84,7 +84,7 @@ export const TAI_CHI_QI_GONG_BAGUA = [
   },
   {
     day: 2,
-    title: 'Qi Gong — 8 Brocades (Ba Duan Jin)',
+    title: 'Qigong — 8 Brocades (Ba Duan Jin)',
     description: 'Ancient 8-movement sequence. Supporting Heaven, Drawing Bow, Separate Heaven & Earth, Wise Owl, Sway Head & Tail.',
     videoUrl: 'https://www.youtube.com/watch?v=ylXD51w3geE',
     videoTitle: 'Eight Brocades — 12 min with English (Ba Duan Jin)',
@@ -111,7 +111,7 @@ export const TAI_CHI_QI_GONG_BAGUA = [
   },
   {
     day: 5,
-    title: 'Qi Gong — Standing Meditation & Flow',
+    title: 'Qigong — Standing Meditation & Flow',
     description: 'Zhan Zhuang (standing post). Sink qi to dantian. Gentle flowing movements.',
     videoUrl: 'https://www.youtube.com/watch?v=Xn70sib9bu4',
     videoTitle: 'Ba Duan Jin — How to do Qigong (Michael Gilman)',
@@ -130,7 +130,7 @@ export const TAI_CHI_QI_GONG_BAGUA = [
   {
     day: 7,
     title: 'Integration — Your Choice',
-    description: 'Pick your favourite from the week. Or flow through a short sequence of Tai Chi + Qi Gong + Bagua circle.',
+    description: 'Pick your favourite from the week. Or flow through a short sequence of Tai Chi + Qigong + Bagua circle.',
     videoUrl: 'https://www.youtube.com/watch?v=6L43P1MY2KA',
     videoTitle: 'Tai Chi 8 Form — Quick flow',
     imageUrl: null,
@@ -443,7 +443,7 @@ export const DAY_B_EXERCISES = [
   { name: 'Piriformis push-ups', detail: '20 reps per side', reps: '1x', learnMoreUrl: 'https://www.youtube.com/results?search_query=piriformis+push+up+exercise' },
   { name: 'Pancake standing pulse', detail: '20 reps', reps: '1x', learnMoreUrl: 'https://www.youtube.com/results?search_query=pancake+stretch+standing+pulse' },
   { name: 'Power raises', detail: '10–12 reps per side', reps: '1x', learnMoreUrl: 'https://www.youtube.com/results?search_query=power+raises+shoulder+exercise' },
-  { name: 'ATG incline press', detail: '10–12 reps', reps: '1x', learnMoreUrl: 'https://www.youtube.com/results?search_query=ATG+incline+press' },
+  { name: 'Incline press', detail: '10–12 reps', reps: '1x', learnMoreUrl: 'https://www.youtube.com/results?search_query=incline+press+exercise' },
   { name: 'Pull up', detail: 'To failure', reps: '1x', learnMoreUrl: 'https://www.youtube.com/results?search_query=pull+up+exercise' },
   { name: 'Wrist ulnar/radial flexion', detail: '10–12 reps', reps: '1x', learnMoreUrl: 'https://www.youtube.com/results?search_query=wrist+ulnar+radial+flexion+exercise' },
   { name: 'Dead hang or farmer\'s carry', detail: 'Grip strength: 20–40 sec hang, or 30 sec carry per hand. Longevity marker.', reps: '2x', learnMoreUrl: 'https://www.youtube.com/results?search_query=dead+hang+farmer+carry+exercise' },
@@ -459,7 +459,7 @@ export const DAY_C_EXERCISES = [
   { name: 'Piriformis push-ups', detail: '20 reps per side', reps: '1x', learnMoreUrl: 'https://www.youtube.com/results?search_query=piriformis+push+up+exercise' },
   { name: 'Pancake standing pulse', detail: '20 reps', reps: '1x', learnMoreUrl: 'https://www.youtube.com/results?search_query=pancake+stretch+standing+pulse' },
   { name: 'QL extensions', detail: '10–12 reps per side', reps: '1x', learnMoreUrl: 'https://www.youtube.com/results?search_query=quadratus+lumborum+QL+extension' },
-  { name: 'ATG row', detail: '10–12 reps per side', reps: '1x', learnMoreUrl: 'https://www.youtube.com/results?search_query=ATG+row+exercise' },
+  { name: 'Row', detail: '10–12 reps per side', reps: '1x', learnMoreUrl: 'https://www.youtube.com/results?search_query=row+exercise+single+arm' },
   { name: 'Neck strengthening', detail: '3 reps', reps: '1x', learnMoreUrl: 'https://www.youtube.com/results?search_query=neck+strengthening+exercise' },
   { name: 'Reverse curls', detail: '10–12 reps', reps: '1x', learnMoreUrl: 'https://www.youtube.com/results?search_query=reverse+curl+exercise' },
   { name: 'Dead hang or farmer\'s carry', detail: 'Grip strength: 20–40 sec hang, or 30 sec carry per hand. Longevity marker.', reps: '2x', learnMoreUrl: 'https://www.youtube.com/results?search_query=dead+hang+farmer+carry+exercise' },
@@ -517,13 +517,13 @@ export const MAIN_EXERCISE_REGRESSIONS: Record<
     reps: '8–10 reps x2',
     learnMoreUrl: 'https://www.youtube.com/results?search_query=back+extension+beginner+regression',
   },
-  'ATG incline press': {
+  'Incline press': {
     name: 'Incline push-up',
     detail: 'Hands elevated on bench/table',
     reps: '8–12 reps',
     learnMoreUrl: 'https://www.youtube.com/results?search_query=incline+push+up+regression',
   },
-  'ATG row': {
+  'Row': {
     name: 'Supported single-arm row',
     detail: 'Bench/chair support for torso',
     reps: '8–12 reps/side',
