@@ -7,7 +7,7 @@
  * Persistence: AsyncStorage / Firestore via useRoutineProgress
  */
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -32,6 +32,7 @@ import {
   buildPtRehabExerciseRows,
   buildPtRehabExtraNotes,
 } from '../../lib/buildPtRehabSection';
+import { getHiddenRoutineSectionIds, isRoutineSectionVisible } from '../../lib/mergeRoutineWithPt';
 import {
   MEDITATIONS,
   BREATHWORK,
@@ -369,6 +370,12 @@ export default function RoutinesScreen() {
   const ptRehabExtras =
     showPtRehab && ptProgram ? buildPtRehabExtraNotes(ptProgram) : [];
 
+  const hiddenSections = useMemo(
+    () => getHiddenRoutineSectionIds(source, ptProgram ?? undefined),
+    [source, ptProgram]
+  );
+  const showSec = useCallback((id: string) => isRoutineSectionVisible(hiddenSections, id), [hiddenSections]);
+
   const mudras = routineDay === 1 ? HAND_MUDRAS_DAY_1 : routineDay === 3 ? HAND_MUDRAS_DAY_3 : HAND_MUDRAS_DAY_5;
   const feet = routineDay === 1 ? FOOT_EXERCISES_DAY_1 : routineDay === 3 ? FOOT_EXERCISES_DAY_3 : FOOT_EXERCISES_DAY_5;
   const quickTwitchFinisher = NERVOUS_SYSTEM_QUICK_TWITCH_BY_DAY[routineDay] ?? [];
@@ -542,7 +549,18 @@ export default function RoutinesScreen() {
           </View>
         )}
 
+        {source === 'pt' && hiddenSections.size > 0 ? (
+          <View style={styles.ptMergeBanner}>
+            <Ionicons name="information-circle-outline" size={18} color={Colors.hrv} />
+            <Text style={styles.ptMergeBannerText}>
+              Some usual sections are hidden based on your PT handoff (merge rules). Your prescribed rehab block stays
+              available when assigned.
+            </Text>
+          </View>
+        ) : null}
+
         {/* 1. Meditation */}
+        {showSec('meditation') ? (
         <Section title="1. Meditation" icon="leaf-outline" color={meditation.color}>
           <View style={styles.sessionCard}>
             <Text style={styles.sessionTitle}>{meditation.name}</Text>
@@ -570,8 +588,10 @@ export default function RoutinesScreen() {
             </View>
           </View>
         </Section>
+        ) : null}
 
         {/* 2. Breathwork */}
+        {showSec('breathwork') ? (
         <Section title="2. Breathwork" icon="heart-outline" color={breathwork.color}>
           <View style={[styles.dayCard, breathworkCompleted && styles.dayCardDone]}>
             <View style={styles.cardHeader}>
@@ -612,9 +632,10 @@ export default function RoutinesScreen() {
             </View>
           </View>
         </Section>
+        ) : null}
 
         {/* PT rehab from handoff (Firestore ptHandoffRequests → useExerciseSettings) */}
-        {showPtRehab && ptProgram ? (
+        {showPtRehab && ptProgram && showSec('pt_rehab') ? (
           <Section title="Your PT rehab program" icon="medkit-outline" color={Colors.hrv}>
             <Text style={styles.attributionHint}>
               From your physical therapist handoff — follow their guidance first; this does not replace medical care.
@@ -658,6 +679,7 @@ export default function RoutinesScreen() {
         ) : null}
 
         {/* 3. Mewing & Face (Level-based) */}
+        {showSec('mewing_face') ? (
         <Section title="Mewing & Face (Level-based)" icon="body-outline" color={Colors.primary}>
           <Text style={styles.attributionHint}>Pain-free posture/mobility suggestions.</Text>
           {faceExercises.map((ex, i) => (
@@ -672,8 +694,10 @@ export default function RoutinesScreen() {
             />
           ))}
         </Section>
+        ) : null}
 
         {/* 4. Neck Exercises (Level-based) */}
+        {showSec('neck') ? (
         <Section title="Neck Exercises (Level-based)" icon="pulse-outline" color={Colors.secondary}>
           {neckExercises.map((ex, i) => (
             <ExerciseItem
@@ -687,10 +711,12 @@ export default function RoutinesScreen() {
             />
           ))}
         </Section>
+        ) : null}
 
         {/* Days 1/3/5 extras */}
         {showMudrasAndFeet ? (
           <>
+            {showSec('hand_mudras') ? (
             <Section title="Hand Mudras (Days 1/3/5)" icon="leaf-outline" color={Colors.gut}>
               {mudras.map((ex, i) => (
                 <ExerciseItem
@@ -703,7 +729,9 @@ export default function RoutinesScreen() {
                 />
               ))}
             </Section>
+            ) : null}
 
+            {showSec('foot_exercises') ? (
             <Section title="Foot Exercises (Days 1/3/5)" icon="fitness-outline" color={Colors.energy}>
               {feet.map((ex, i) => (
                 <ExerciseItem
@@ -716,26 +744,32 @@ export default function RoutinesScreen() {
                 />
               ))}
             </Section>
+            ) : null}
           </>
         ) : null}
 
         {/* 3. Core Balance */}
+        {showSec('core_balance') ? (
         <Section title="3. Core Balance" icon="body-outline" color={Colors.primary}>
           <Text style={styles.attributionHint}>Dr. Ryan Peebles — corebalancetraining.com</Text>
           {CORE_BALANCE.map((ex, i) => (
             <ExerciseItem key={i} name={ex.name} detail={ex.detail} reps={ex.reps} videoUrl={'videoUrl' in ex ? optionalString(ex.videoUrl) : undefined} learnMoreUrl={'learnMoreUrl' in ex ? optionalString(ex.learnMoreUrl) : undefined} onTimerComplete={onExerciseTimerComplete} autoEasier={level === 'beginner'} />
           ))}
         </Section>
+        ) : null}
 
         {/* 4. G-O-A-T-A Floor */}
+        {showSec('goata_floor') ? (
         <Section title="4. G-O-A-T-A Floor" icon="fitness-outline" color={Colors.secondary}>
           <Text style={styles.attributionHint}>GOATA / Nick Ball — nickballtraining.com</Text>
           {GOATA_FLOOR.map((ex, i) => (
             <ExerciseItem key={i} name={ex.name} detail={ex.detail} reps={ex.reps} videoUrl={'videoUrl' in ex ? optionalString(ex.videoUrl) : undefined} learnMoreUrl={'learnMoreUrl' in ex ? optionalString(ex.learnMoreUrl) : undefined} onTimerComplete={onExerciseTimerComplete} autoEasier={level === 'beginner'} />
           ))}
         </Section>
+        ) : null}
 
         {/* 5. Qigong → Tai Chi */}
+        {showSec('qigong_tai_chi') ? (
         <Section title="5. Qigong → Tai Chi" icon="leaf-outline" color={Colors.gut}>
           <View style={styles.qigongIntro}>
             <Text style={styles.qigongIntroText}>{QIGONG_TAICHI_INTRO}</Text>
@@ -777,9 +811,11 @@ export default function RoutinesScreen() {
             </View>
           ) : null}
         </Section>
+        ) : null}
 
         {/* 6. Main Block OR Nervous System & Fascia */}
-        {mainBlockToday ? (
+        {showSec('main_strength') ? (
+        mainBlockToday ? (
           <Section title={`6. Warm-up + Main (Day ${mainDay})`} icon="flame-outline" color={Colors.warning}>
             <Text style={styles.attributionHint}>Knees-over-toes style + GOATA</Text>
             <Text style={styles.subsectionLabel}>Warm-up</Text>
@@ -814,9 +850,11 @@ export default function RoutinesScreen() {
               </>
             ) : null}
           </Section>
-        )}
+        )
+        ) : null}
 
         {/* Longevity cardio (optional, outside morning routine) */}
+        {showSec('longevity_cardio') ? (
         <Section title="Optional: Zone 2 & Zone 5" icon="fitness-outline" color={Colors.energy}>
           <Text style={styles.subsectionLabel}>For longevity: aerobic base + VO2 max</Text>
           <View style={styles.cardioRow}>
@@ -862,6 +900,7 @@ export default function RoutinesScreen() {
             ))}
           </View>
         </Section>
+        ) : null}
 
         {/* Mark routine complete */}
         <TouchableOpacity
@@ -908,6 +947,18 @@ const styles = StyleSheet.create({
   screenTitle: { fontSize: 22, fontWeight: '800', color: Colors.textPrimary, marginBottom: 4 },
   screenSub: { color: Colors.textSecondary, fontSize: 13, marginBottom: 4 },
   screenSub2: { color: Colors.textMuted, fontSize: 11, marginBottom: 12 },
+  ptMergeBanner: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+    padding: 12,
+    marginBottom: 14,
+    borderRadius: 10,
+    backgroundColor: `${Colors.hrv}18`,
+    borderWidth: 1,
+    borderColor: `${Colors.hrv}44`,
+  },
+  ptMergeBannerText: { flex: 1, color: Colors.textSecondary, fontSize: 12, lineHeight: 17 },
 
   dayControls: {
     flexDirection: 'row',

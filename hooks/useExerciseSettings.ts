@@ -26,6 +26,10 @@ export interface ExerciseSettings {
     customNutritionNotes?: string;
     redFlagWatchlist?: string[];
     ptAuthor?: string;
+    routineMerge?: {
+      disabledSections?: string[];
+      conflictTagsActive?: string[];
+    };
   } | null;
 }
 
@@ -124,6 +128,10 @@ export function useExerciseSettings() {
               customNutritionNotes: string;
               redFlagWatchlist: string[];
               ptAuthor: string;
+              routineMerge: {
+                disabledSections?: string[];
+                conflictTagsActive?: string[];
+              };
             }>;
             const ptLevel = isValidLevel(ptData.level) ? ptData.level : 'beginner';
             setSettings({
@@ -138,6 +146,7 @@ export function useExerciseSettings() {
                 customNutritionNotes: ptData.customNutritionNotes,
                 redFlagWatchlist: ptData.redFlagWatchlist,
                 ptAuthor: ptData.ptAuthor,
+                routineMerge: ptData.routineMerge,
               },
             });
             // PT already picked an initial level; do not force signup selection.

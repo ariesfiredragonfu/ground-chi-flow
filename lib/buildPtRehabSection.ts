@@ -4,6 +4,12 @@
  */
 export type ExerciseSource = 'pt' | 'signup' | 'user' | 'guest';
 
+/** Batch B: PT-chosen hides + tag-driven conflicts (Firestore `routineMerge`). */
+export type PtRoutineMerge = {
+  disabledSections?: string[];
+  conflictTagsActive?: string[];
+};
+
 /** Subset of handoff / user settings shape used for the PT rehab section. */
 export type PtProgramPayload = {
   protocolKey?: string;
@@ -13,6 +19,7 @@ export type PtProgramPayload = {
   customNutritionNotes?: string;
   redFlagWatchlist?: string[];
   ptAuthor?: string;
+  routineMerge?: PtRoutineMerge;
 };
 
 export type PtRehabRow = {

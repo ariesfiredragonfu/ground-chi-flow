@@ -4,6 +4,8 @@
   "main": "index.ts",
   "scripts": {
     "verify:pt-rehab": "tsx scripts/pt-rehab-selftest.ts",
+    "verify:pt-merge-b": "tsx scripts/pt-merge-b-selftest.ts",
+    "verify:pt-handoff": "npm run verify:pt-rehab && npm run verify:pt-merge-b",
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
