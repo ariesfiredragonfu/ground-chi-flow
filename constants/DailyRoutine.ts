@@ -584,6 +584,30 @@ export const VERTICAL_LOAD_PROGRESSION = [
   },
 ];
 
+// Advanced progression after jump rope for vertical leap development.
+export const ADVANCED_VERTICAL_LEAP_PROGRESSION = [
+  {
+    stage: '4. Countermovement jump',
+    detail: 'Stick each landing. 3–5 reps x3. Full recovery between sets.',
+    learnMoreUrl: 'https://www.youtube.com/results?search_query=countermovement+jump+landing+mechanics',
+  },
+  {
+    stage: '5. Box jump (low to moderate height)',
+    detail: 'Step down, do not jump down. 3–5 reps x3.',
+    learnMoreUrl: 'https://www.youtube.com/results?search_query=box+jump+proper+form+step+down',
+  },
+  {
+    stage: '6. Depth drop to stick',
+    detail: 'Drop from low box, absorb and hold. 3 reps x3.',
+    learnMoreUrl: 'https://www.youtube.com/results?search_query=depth+drop+landing+drill',
+  },
+  {
+    stage: '7. Approach jump / broad jump',
+    detail: 'Explosive intent with controlled landing. 3–4 reps x3.',
+    learnMoreUrl: 'https://www.youtube.com/results?search_query=approach+jump+training+broad+jump+drill',
+  },
+];
+
 // Fun balance sports for advanced/medium users — mix fun with balance training
 export const BALANCE_FUN_SPORTS = [
   'Skateboarding',

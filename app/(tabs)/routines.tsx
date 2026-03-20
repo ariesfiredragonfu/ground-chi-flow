@@ -41,6 +41,7 @@ import {
   getMainExercises,
   LONGEVITY_CARDIO,
   VERTICAL_LOAD_PROGRESSION,
+  ADVANCED_VERTICAL_LEAP_PROGRESSION,
   BALANCE_FUN_SPORTS,
   MEWING_FACE_EXERCISES_BY_LEVEL,
   NECK_EXERCISES_BY_LEVEL,
@@ -115,17 +116,18 @@ type ExerciseItemProps = {
     learnMoreUrl?: string | null;
   };
   onTimerComplete?: (exerciseName: string) => void;
+  autoEasier?: boolean;
 };
-function ExerciseItem({ name, detail, reps, videoUrl, learnMoreUrl, regression, onTimerComplete }: ExerciseItemProps) {
-  const [useRegression, setUseRegression] = useState(false);
+function ExerciseItem({ name, detail, reps, videoUrl, learnMoreUrl, regression, onTimerComplete, autoEasier = false }: ExerciseItemProps) {
+  const [useRegression, setUseRegression] = useState(autoEasier && !!regression);
   const [timerRunning, setTimerRunning] = useState(false);
   const [timeLeft, setTimeLeft] = useState(0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const keepAwakeTagRef = useRef(`exercise-timer-${name.replace(/\s+/g, '-').toLowerCase()}`);
 
   useEffect(() => {
-    setUseRegression(false);
-  }, [name, regression?.name]);
+    setUseRegression(autoEasier && !!regression);
+  }, [name, regression?.name, autoEasier]);
 
   useEffect(() => {
     return () => {
@@ -137,8 +139,14 @@ function ExerciseItem({ name, detail, reps, videoUrl, learnMoreUrl, regression, 
   const activeVideoUrl = useRegression && regression?.videoUrl ? regression.videoUrl : videoUrl;
   const activeLearnMoreUrl = useRegression && regression?.learnMoreUrl ? regression.learnMoreUrl : learnMoreUrl;
   const activeName = useRegression && regression ? regression.name : name;
-  const activeDetail = useRegression && regression ? regression.detail : detail;
-  const activeReps = useRegression && regression ? regression.reps : reps;
+  const baseDetail = useRegression && regression ? regression.detail : detail;
+  const baseReps = useRegression && regression ? regression.reps : reps;
+  const activeDetail = autoEasier
+    ? [baseDetail, 'Reduced range of motion; stop before pain.'].filter(Boolean).join(' · ')
+    : baseDetail;
+  const activeReps = autoEasier
+    ? [baseReps, 'Use ~60–80% of listed reps/time to start.'].filter(Boolean).join(' · ')
+    : baseReps;
 
   const linkUrl = activeVideoUrl || activeLearnMoreUrl;
   const linkLabel = activeVideoUrl ? 'Watch' : 'Learn more';
@@ -216,7 +224,7 @@ function ExerciseItem({ name, detail, reps, videoUrl, learnMoreUrl, regression, 
             onPress={() => setUseRegression((v) => !v)}
           >
             <Text style={[styles.exerciseLinkText, { color: Colors.primary }]}>
-              {useRegression ? 'Full option' : 'Easier option'}
+              {useRegression ? (autoEasier ? 'Beginner option active' : 'Full option') : 'Easier option'}
             </Text>
           </TouchableOpacity>
         ) : null}
@@ -479,18 +487,19 @@ export default function RoutinesScreen() {
 
         <View style={styles.levelSelectorRow}>
           <Text style={styles.levelSelectorLabel}>Exercise Level</Text>
-          <TouchableOpacity
-            style={styles.levelSelectorBtn}
-            onPress={() => {
-              Alert.alert(`Exercise Level (source: ${source})`, 'Choose your level:', [
-                { text: 'Beginner', onPress: () => setLevel('beginner', 'user') },
-                { text: 'Intermediate', onPress: () => setLevel('intermediate', 'user') },
-                { text: 'Advanced', onPress: () => setLevel('advanced', 'user') },
-              ]);
-            }}
-          >
-            <Text style={styles.levelSelectorBtnText}>{level[0].toUpperCase() + level.slice(1)}</Text>
-          </TouchableOpacity>
+          <View style={styles.levelSelectorTabs}>
+            {(['beginner', 'intermediate', 'advanced'] as const).map((lvl) => (
+              <TouchableOpacity
+                key={lvl}
+                style={[styles.levelTabBtn, level === lvl && styles.levelTabBtnActive]}
+                onPress={() => setLevel(lvl, 'user')}
+              >
+                <Text style={[styles.levelTabText, level === lvl && styles.levelTabTextActive]}>
+                  {lvl[0].toUpperCase() + lvl.slice(1)}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
         </View>
         {showDayPicker && (
           <View style={styles.dayPicker}>
@@ -655,7 +664,7 @@ export default function RoutinesScreen() {
         <Section title="3. Core Balance" icon="body-outline" color={Colors.primary}>
           <Text style={styles.attributionHint}>Dr. Ryan Peebles — corebalancetraining.com</Text>
           {CORE_BALANCE.map((ex, i) => (
-            <ExerciseItem key={i} name={ex.name} detail={ex.detail} reps={ex.reps} videoUrl={'videoUrl' in ex ? optionalString(ex.videoUrl) : undefined} learnMoreUrl={'learnMoreUrl' in ex ? optionalString(ex.learnMoreUrl) : undefined} onTimerComplete={onExerciseTimerComplete} />
+            <ExerciseItem key={i} name={ex.name} detail={ex.detail} reps={ex.reps} videoUrl={'videoUrl' in ex ? optionalString(ex.videoUrl) : undefined} learnMoreUrl={'learnMoreUrl' in ex ? optionalString(ex.learnMoreUrl) : undefined} onTimerComplete={onExerciseTimerComplete} autoEasier={level === 'beginner'} />
           ))}
         </Section>
 
@@ -663,7 +672,7 @@ export default function RoutinesScreen() {
         <Section title="4. G-O-A-T-A Floor" icon="fitness-outline" color={Colors.secondary}>
           <Text style={styles.attributionHint}>GOATA / Nick Ball — nickballtraining.com</Text>
           {GOATA_FLOOR.map((ex, i) => (
-            <ExerciseItem key={i} name={ex.name} detail={ex.detail} reps={ex.reps} videoUrl={'videoUrl' in ex ? optionalString(ex.videoUrl) : undefined} learnMoreUrl={'learnMoreUrl' in ex ? optionalString(ex.learnMoreUrl) : undefined} onTimerComplete={onExerciseTimerComplete} />
+            <ExerciseItem key={i} name={ex.name} detail={ex.detail} reps={ex.reps} videoUrl={'videoUrl' in ex ? optionalString(ex.videoUrl) : undefined} learnMoreUrl={'learnMoreUrl' in ex ? optionalString(ex.learnMoreUrl) : undefined} onTimerComplete={onExerciseTimerComplete} autoEasier={level === 'beginner'} />
           ))}
         </Section>
 
@@ -716,18 +725,18 @@ export default function RoutinesScreen() {
             <Text style={styles.attributionHint}>Knees-over-toes style + GOATA</Text>
             <Text style={styles.subsectionLabel}>Warm-up</Text>
             {WARMUP.map((ex, i) => (
-              <ExerciseItem key={`w-${i}`} name={ex.name} detail={ex.detail} reps={ex.reps} videoUrl={'videoUrl' in ex ? optionalString(ex.videoUrl) : undefined} learnMoreUrl={'learnMoreUrl' in ex ? optionalString(ex.learnMoreUrl) : undefined} onTimerComplete={onExerciseTimerComplete} />
+              <ExerciseItem key={`w-${i}`} name={ex.name} detail={ex.detail} reps={ex.reps} videoUrl={'videoUrl' in ex ? optionalString(ex.videoUrl) : undefined} learnMoreUrl={'learnMoreUrl' in ex ? optionalString(ex.learnMoreUrl) : undefined} onTimerComplete={onExerciseTimerComplete} autoEasier={level === 'beginner'} />
             ))}
             <Text style={[styles.subsectionLabel, { marginTop: 12 }]}>Main exercises</Text>
             {mainExercises.map((ex, i) => (
-              <ExerciseItem key={`m-${i}`} name={ex.name} detail={ex.detail} reps={ex.reps} videoUrl={'videoUrl' in ex ? optionalString(ex.videoUrl) : undefined} learnMoreUrl={'learnMoreUrl' in ex ? optionalString(ex.learnMoreUrl) : undefined} regression={MAIN_EXERCISE_REGRESSIONS[ex.name]} onTimerComplete={onExerciseTimerComplete} />
+              <ExerciseItem key={`m-${i}`} name={ex.name} detail={ex.detail} reps={ex.reps} videoUrl={'videoUrl' in ex ? optionalString(ex.videoUrl) : undefined} learnMoreUrl={'learnMoreUrl' in ex ? optionalString(ex.learnMoreUrl) : undefined} regression={MAIN_EXERCISE_REGRESSIONS[ex.name]} onTimerComplete={onExerciseTimerComplete} autoEasier={level === 'beginner'} />
             ))}
           </Section>
         ) : (
           <Section title="6. Nervous System & Fascia" icon="pulse-outline" color={Colors.hrv}>
             <Text style={styles.nsFasciaHint}>Lighter block. Vagal tone, fascia release. ~15–25 min.</Text>
             {NERVOUS_SYSTEM_FASCIA.map((ex, i) => (
-              <ExerciseItem key={`ns-${i}`} name={ex.name} detail={ex.detail} reps={ex.reps} videoUrl={'videoUrl' in ex ? optionalString(ex.videoUrl) : undefined} learnMoreUrl={'learnMoreUrl' in ex ? optionalString(ex.learnMoreUrl) : undefined} onTimerComplete={onExerciseTimerComplete} />
+              <ExerciseItem key={`ns-${i}`} name={ex.name} detail={ex.detail} reps={ex.reps} videoUrl={'videoUrl' in ex ? optionalString(ex.videoUrl) : undefined} learnMoreUrl={'learnMoreUrl' in ex ? optionalString(ex.learnMoreUrl) : undefined} onTimerComplete={onExerciseTimerComplete} autoEasier={level === 'beginner'} />
             ))}
             {quickTwitchFinisher.length ? (
               <>
@@ -740,6 +749,7 @@ export default function RoutinesScreen() {
                     reps={ex.reps}
                     learnMoreUrl={ex.learnMoreUrl}
                     onTimerComplete={onExerciseTimerComplete}
+                    autoEasier={level === 'beginner'}
                   />
                 ))}
               </>
@@ -769,6 +779,17 @@ export default function RoutinesScreen() {
             <View key={i} style={styles.progressionRow}>
               <Text style={styles.progressionStage}>{v.stage}</Text>
               <Text style={styles.progressionDetail}>{v.detail}</Text>
+            </View>
+          ))}
+          <Text style={[styles.subsectionLabel, { marginTop: 14 }]}>Advanced progression (after jump rope)</Text>
+          {ADVANCED_VERTICAL_LEAP_PROGRESSION.map((v, i) => (
+            <View key={`adv-${i}`} style={styles.progressionRow}>
+              <Text style={styles.progressionStage}>{v.stage}</Text>
+              <Text style={styles.progressionDetail}>{v.detail}</Text>
+              <TouchableOpacity style={styles.exerciseLinkBtn} onPress={() => Linking.openURL(v.learnMoreUrl)}>
+                <Ionicons name="open-outline" size={16} color={Colors.primary} />
+                <Text style={styles.exerciseLinkText}>Learn more</Text>
+              </TouchableOpacity>
             </View>
           ))}
 
@@ -838,15 +859,18 @@ const styles = StyleSheet.create({
   },
   levelSelectorRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 14, paddingHorizontal: 2 },
   levelSelectorLabel: { color: Colors.textSecondary, fontSize: 12, fontWeight: '700' },
-  levelSelectorBtn: {
-    backgroundColor: `${Colors.primary}22`,
-    borderRadius: 10,
+  levelSelectorTabs: { flexDirection: 'row', gap: 8, marginLeft: 'auto' },
+  levelTabBtn: {
     borderWidth: 1,
     borderColor: `${Colors.primary}44`,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    backgroundColor: 'transparent',
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
   },
-  levelSelectorBtnText: { color: Colors.primary, fontSize: 13, fontWeight: '800' },
+  levelTabBtnActive: { backgroundColor: `${Colors.primary}22`, borderColor: `${Colors.primary}88` },
+  levelTabText: { color: Colors.textSecondary, fontSize: 12, fontWeight: '700' },
+  levelTabTextActive: { color: Colors.primary, fontWeight: '800' },
   dayBtn: {
     flex: 1,
     flexDirection: 'row',
