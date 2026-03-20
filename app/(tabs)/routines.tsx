@@ -21,6 +21,8 @@ import {
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { Audio } from 'expo-av';
+import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 import { Colors } from '../../constants/Colors';
 import { useRoutineProgress, useRoutineDay } from '../../hooks/useHealthData';
 import { useExerciseSettings } from '../../hooks/useExerciseSettings';
@@ -48,6 +50,7 @@ import {
   FOOT_EXERCISES_DAY_1,
   FOOT_EXERCISES_DAY_3,
   FOOT_EXERCISES_DAY_5,
+  MAIN_EXERCISE_REGRESSIONS,
 } from '../../constants/DailyRoutine';
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
@@ -55,6 +58,17 @@ function formatTime(secs: number): string {
   const m = Math.floor(secs / 60).toString().padStart(2, '0');
   const s = (secs % 60).toString().padStart(2, '0');
   return `${m}:${s}`;
+}
+
+function inferDurationSeconds(detail: string | null, reps: string | null): number | null {
+  const text = `${detail ?? ''} ${reps ?? ''}`.toLowerCase();
+  const m = text.match(/(\d+)(?:\s*[–-]\s*\d+)?\s*(sec|seconds|min|minutes)\b/);
+  if (!m) return null;
+  const n = Number(m[1]);
+  if (!Number.isFinite(n) || n <= 0) return null;
+  const unit = m[2];
+  if (unit.startsWith('min')) return n * 60;
+  return n;
 }
 
 
@@ -95,13 +109,25 @@ type ExerciseItemProps = {
     videoUrl?: string | null;
     learnMoreUrl?: string | null;
   };
+  onTimerComplete?: (exerciseName: string) => void;
 };
-function ExerciseItem({ name, detail, reps, videoUrl, learnMoreUrl, regression }: ExerciseItemProps) {
+function ExerciseItem({ name, detail, reps, videoUrl, learnMoreUrl, regression, onTimerComplete }: ExerciseItemProps) {
   const [useRegression, setUseRegression] = useState(false);
+  const [timerRunning, setTimerRunning] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(0);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const keepAwakeTagRef = useRef(`exercise-timer-${name.replace(/\s+/g, '-').toLowerCase()}`);
 
   useEffect(() => {
     setUseRegression(false);
   }, [name, regression?.name]);
+
+  useEffect(() => {
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      deactivateKeepAwake(keepAwakeTagRef.current);
+    };
+  }, []);
 
   const activeVideoUrl = useRegression && regression?.videoUrl ? regression.videoUrl : videoUrl;
   const activeLearnMoreUrl = useRegression && regression?.learnMoreUrl ? regression.learnMoreUrl : learnMoreUrl;
@@ -111,6 +137,39 @@ function ExerciseItem({ name, detail, reps, videoUrl, learnMoreUrl, regression }
 
   const linkUrl = activeVideoUrl || activeLearnMoreUrl;
   const linkLabel = activeVideoUrl ? 'Watch' : 'Learn more';
+  const inferredSeconds = inferDurationSeconds(activeDetail, activeReps);
+
+  const startExerciseTimer = async () => {
+    if (!inferredSeconds || inferredSeconds <= 0) return;
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    setTimerRunning(true);
+    setTimeLeft(inferredSeconds);
+    try {
+      await activateKeepAwakeAsync(keepAwakeTagRef.current);
+    } catch {}
+
+    intervalRef.current = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          if (intervalRef.current) clearInterval(intervalRef.current);
+          intervalRef.current = null;
+          setTimerRunning(false);
+          deactivateKeepAwake(keepAwakeTagRef.current);
+          onTimerComplete?.(activeName);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
+  const stopExerciseTimer = () => {
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    intervalRef.current = null;
+    setTimerRunning(false);
+    setTimeLeft(0);
+    deactivateKeepAwake(keepAwakeTagRef.current);
+  };
 
   return (
     <View style={styles.exerciseRow}>
@@ -124,6 +183,18 @@ function ExerciseItem({ name, detail, reps, videoUrl, learnMoreUrl, regression }
       </View>
 
       <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+        {inferredSeconds ? (
+          <TouchableOpacity
+            style={styles.exerciseLinkBtnOutline}
+            onPress={timerRunning ? stopExerciseTimer : startExerciseTimer}
+          >
+            <Ionicons name={timerRunning ? 'stop-outline' : 'timer-outline'} size={16} color={Colors.primary} />
+            <Text style={[styles.exerciseLinkText, { color: Colors.primary }]}>
+              {timerRunning ? formatTime(timeLeft) : `Timer ${formatTime(inferredSeconds)}`}
+            </Text>
+          </TouchableOpacity>
+        ) : null}
+
         {linkUrl ? (
           <TouchableOpacity
             style={styles.exerciseLinkBtn}
@@ -161,10 +232,18 @@ export default function RoutinesScreen() {
   const [activeBreathworkDay, setActiveBreathworkDay] = useState<number | null>(null);
   const [timeLeft, setTimeLeft] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const completionSoundRef = useRef<Audio.Sound | null>(null);
   const [showDayPicker, setShowDayPicker] = useState(false);
   const levelPromptedRef = useRef(false);
 
-  useEffect(() => () => { clearInterval(timerRef.current!); }, []);
+  useEffect(() => {
+    return () => {
+      clearInterval(timerRef.current!);
+      if (completionSoundRef.current) {
+        completionSoundRef.current.unloadAsync().catch(() => {});
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (loadingExerciseSettings) return;
@@ -236,6 +315,7 @@ export default function RoutinesScreen() {
           clearInterval(timerRef.current!);
           setActiveBreathworkDay(null);
           markDay(day, true);
+          playDoneSound().catch(() => {});
           Alert.alert('Breathwork Complete! 🌿', `Day ${day} done. Great work!`);
           return 0;
         }
@@ -253,6 +333,30 @@ export default function RoutinesScreen() {
   const toggleComplete = useCallback((day: number) => {
     markDay(day, !progress[day]?.completed);
   }, [progress, markDay]);
+
+  const playDoneSound = useCallback(async () => {
+    try {
+      if (completionSoundRef.current) {
+        await completionSoundRef.current.unloadAsync();
+        completionSoundRef.current = null;
+      }
+      const { sound } = await Audio.Sound.createAsync({
+        uri: 'https://actions.google.com/sounds/v1/alarms/beep_short.ogg',
+      });
+      completionSoundRef.current = sound;
+      await sound.playAsync();
+    } catch {
+      // Keep UI flow even if sound fails.
+    }
+  }, []);
+
+  const onExerciseTimerComplete = useCallback(
+    async (exerciseName: string) => {
+      await playDoneSound();
+      Alert.alert('Timer complete', `${exerciseName} timer finished.`);
+    },
+    [playDoneSound]
+  );
 
   if (loadingProgress) {
     return (
@@ -395,6 +499,7 @@ export default function RoutinesScreen() {
               reps={ex.reps}
               learnMoreUrl={ex.learnMoreUrl}
               regression={ex.regression}
+              onTimerComplete={onExerciseTimerComplete}
             />
           ))}
         </Section>
@@ -409,6 +514,7 @@ export default function RoutinesScreen() {
               reps={ex.reps}
               learnMoreUrl={ex.learnMoreUrl}
               regression={ex.regression}
+              onTimerComplete={onExerciseTimerComplete}
             />
           ))}
         </Section>
@@ -424,6 +530,7 @@ export default function RoutinesScreen() {
                   detail={ex.detail}
                   reps={ex.reps}
                   learnMoreUrl={ex.learnMoreUrl}
+                  onTimerComplete={onExerciseTimerComplete}
                 />
               ))}
             </Section>
@@ -436,6 +543,7 @@ export default function RoutinesScreen() {
                   detail={ex.detail}
                   reps={ex.reps}
                   learnMoreUrl={ex.learnMoreUrl}
+                  onTimerComplete={onExerciseTimerComplete}
                 />
               ))}
             </Section>
@@ -446,7 +554,7 @@ export default function RoutinesScreen() {
         <Section title="3. Core Balance" icon="body-outline" color={Colors.primary}>
           <Text style={styles.attributionHint}>Dr. Ryan Peebles — corebalancetraining.com</Text>
           {CORE_BALANCE.map((ex, i) => (
-            <ExerciseItem key={i} name={ex.name} detail={ex.detail} reps={ex.reps} videoUrl={'videoUrl' in ex ? ex.videoUrl : undefined} learnMoreUrl={'learnMoreUrl' in ex ? ex.learnMoreUrl : undefined} />
+            <ExerciseItem key={i} name={ex.name} detail={ex.detail} reps={ex.reps} videoUrl={'videoUrl' in ex ? ex.videoUrl : undefined} learnMoreUrl={'learnMoreUrl' in ex ? ex.learnMoreUrl : undefined} onTimerComplete={onExerciseTimerComplete} />
           ))}
         </Section>
 
@@ -454,7 +562,7 @@ export default function RoutinesScreen() {
         <Section title="4. G-O-A-T-A Floor" icon="fitness-outline" color={Colors.secondary}>
           <Text style={styles.attributionHint}>GOATA / Nick Ball — nickballtraining.com</Text>
           {GOATA_FLOOR.map((ex, i) => (
-            <ExerciseItem key={i} name={ex.name} detail={ex.detail} reps={ex.reps} videoUrl={'videoUrl' in ex ? ex.videoUrl : undefined} learnMoreUrl={'learnMoreUrl' in ex ? ex.learnMoreUrl : undefined} />
+            <ExerciseItem key={i} name={ex.name} detail={ex.detail} reps={ex.reps} videoUrl={'videoUrl' in ex ? ex.videoUrl : undefined} learnMoreUrl={'learnMoreUrl' in ex ? ex.learnMoreUrl : undefined} onTimerComplete={onExerciseTimerComplete} />
           ))}
         </Section>
 
@@ -491,18 +599,18 @@ export default function RoutinesScreen() {
             <Text style={styles.attributionHint}>ATG (Ben Patrick) + GOATA</Text>
             <Text style={styles.subsectionLabel}>Warm-up</Text>
             {WARMUP.map((ex, i) => (
-              <ExerciseItem key={`w-${i}`} name={ex.name} detail={ex.detail} reps={ex.reps} videoUrl={'videoUrl' in ex ? ex.videoUrl : undefined} learnMoreUrl={'learnMoreUrl' in ex ? ex.learnMoreUrl : undefined} />
+              <ExerciseItem key={`w-${i}`} name={ex.name} detail={ex.detail} reps={ex.reps} videoUrl={'videoUrl' in ex ? ex.videoUrl : undefined} learnMoreUrl={'learnMoreUrl' in ex ? ex.learnMoreUrl : undefined} onTimerComplete={onExerciseTimerComplete} />
             ))}
             <Text style={[styles.subsectionLabel, { marginTop: 12 }]}>Main exercises</Text>
             {mainExercises.map((ex, i) => (
-              <ExerciseItem key={`m-${i}`} name={ex.name} detail={ex.detail} reps={ex.reps} videoUrl={'videoUrl' in ex ? ex.videoUrl : undefined} learnMoreUrl={'learnMoreUrl' in ex ? ex.learnMoreUrl : undefined} />
+              <ExerciseItem key={`m-${i}`} name={ex.name} detail={ex.detail} reps={ex.reps} videoUrl={'videoUrl' in ex ? ex.videoUrl : undefined} learnMoreUrl={'learnMoreUrl' in ex ? ex.learnMoreUrl : undefined} regression={MAIN_EXERCISE_REGRESSIONS[ex.name]} onTimerComplete={onExerciseTimerComplete} />
             ))}
           </Section>
         ) : (
           <Section title="6. Nervous System & Fascia" icon="pulse-outline" color={Colors.hrv}>
             <Text style={styles.nsFasciaHint}>Lighter block. Vagal tone, fascia release. ~15–25 min.</Text>
             {NERVOUS_SYSTEM_FASCIA.map((ex, i) => (
-              <ExerciseItem key={`ns-${i}`} name={ex.name} detail={ex.detail} reps={ex.reps} videoUrl={'videoUrl' in ex ? ex.videoUrl : undefined} learnMoreUrl={'learnMoreUrl' in ex ? ex.learnMoreUrl : undefined} />
+              <ExerciseItem key={`ns-${i}`} name={ex.name} detail={ex.detail} reps={ex.reps} videoUrl={'videoUrl' in ex ? ex.videoUrl : undefined} learnMoreUrl={'learnMoreUrl' in ex ? ex.learnMoreUrl : undefined} onTimerComplete={onExerciseTimerComplete} />
             ))}
           </Section>
         )}

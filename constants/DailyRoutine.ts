@@ -465,6 +465,72 @@ export const DAY_C_EXERCISES = [
   { name: 'Dead hang or farmer\'s carry', detail: 'Grip strength: 20–40 sec hang, or 30 sec carry per hand. Longevity marker.', reps: '2x', learnMoreUrl: 'https://www.youtube.com/results?search_query=dead+hang+farmer+carry+exercise' },
 ];
 
+// ── Regressions for main exercises (client can step down if needed) ─────────
+export const MAIN_EXERCISE_REGRESSIONS: Record<
+  string,
+  {
+    name: string;
+    detail: string | null;
+    reps: string | null;
+    learnMoreUrl?: string | null;
+  }
+> = {
+  'G-O-A-T-A Lunge': {
+    name: 'Split squat hold (supported)',
+    detail: 'Use support/chair as needed',
+    reps: '20–30 sec/side x2',
+    learnMoreUrl: 'https://www.youtube.com/results?search_query=supported+split+squat+hold+regression',
+  },
+  'Stretch strength deadlift': {
+    name: 'Hip hinge to wall',
+    detail: 'Bodyweight hinge pattern first',
+    reps: '8–12 reps x2',
+    learnMoreUrl: 'https://www.youtube.com/results?search_query=hip+hinge+to+wall+exercise',
+  },
+  'L-sit': {
+    name: 'Seated knee-tuck hold',
+    detail: 'Hands by hips, lift one or both feet slightly',
+    reps: '10–20 sec x2',
+    learnMoreUrl: 'https://www.youtube.com/results?search_query=l+sit+regression+seated+knee+tuck+hold',
+  },
+  'Slant or Hackenschmidt squat': {
+    name: 'Box squat (bodyweight)',
+    detail: 'Controlled range to comfortable depth',
+    reps: '8–12 reps x2',
+    learnMoreUrl: 'https://www.youtube.com/results?search_query=box+squat+bodyweight+regression',
+  },
+  'Nordic hamstring lowers': {
+    name: 'Assisted Nordic (band or push-up assist)',
+    detail: 'Use strong assistance and short range',
+    reps: '3–5 reps x2',
+    learnMoreUrl: 'https://www.youtube.com/results?search_query=assisted+nordic+hamstring+regression',
+  },
+  'Pull up': {
+    name: 'Band-assisted pull-up or ring row',
+    detail: 'Choose pain-free shoulder path',
+    reps: '6–10 reps',
+    learnMoreUrl: 'https://www.youtube.com/results?search_query=band+assisted+pull+up+or+ring+row+regression',
+  },
+  'Back extension single leg with band': {
+    name: 'Back extension (bilateral, no band)',
+    detail: 'Short range to start',
+    reps: '8–10 reps x2',
+    learnMoreUrl: 'https://www.youtube.com/results?search_query=back+extension+beginner+regression',
+  },
+  'ATG incline press': {
+    name: 'Incline push-up',
+    detail: 'Hands elevated on bench/table',
+    reps: '8–12 reps',
+    learnMoreUrl: 'https://www.youtube.com/results?search_query=incline+push+up+regression',
+  },
+  'ATG row': {
+    name: 'Supported single-arm row',
+    detail: 'Bench/chair support for torso',
+    reps: '8–12 reps/side',
+    learnMoreUrl: 'https://www.youtube.com/results?search_query=supported+single+arm+row+regression',
+  },
+};
+
 // ── Longevity extras (optional, outside morning routine) ─────────────────────
 // Zone 2 = aerobic base (mitochondrial health). Zone 5 = VO2 max (HIIT).
 // No-impact options: Gazelle, bike. Trampoline = lymph drainage + vertical load.
