@@ -60,6 +60,26 @@ export const NERVOUS_SYSTEM_FASCIA = [
   { name: 'Cold face splash (optional)', detail: '10–30 sec. Activates vagal calming response.', reps: '1x', learnMoreUrl: 'https://www.youtube.com/results?search_query=cold+face+splash+vagus+nerve' },
 ];
 
+// Tue/Thu/Sat finisher block (day 2/4/6): add reactive and quick-twitch work
+// inspired by Marinovich and Schroeder training themes.
+export const NERVOUS_SYSTEM_QUICK_TWITCH_BY_DAY: Record<number, LadderExercise[]> = {
+  2: [
+    { name: 'Ball drop reaction catch (Marinovich-inspired)', detail: 'Partner/wall drop; react from split stance', reps: '20–30 sec x3', learnMoreUrl: 'https://www.youtube.com/results?search_query=ball+drop+reaction+catch+drill' },
+    { name: 'Snap-down to athletic stance (Schroeder-inspired)', detail: 'Fast drop and stick with quiet landing', reps: '3–5 reps x3', learnMoreUrl: 'https://www.youtube.com/results?search_query=snap+down+athletic+stance+drill' },
+    { name: 'Quick pogo hops', detail: 'Low amplitude, short ground contact', reps: '10–15 sec x3', learnMoreUrl: 'https://www.youtube.com/results?search_query=quick+pogo+hops+drill' },
+  ],
+  4: [
+    { name: 'Tennis-ball wall reaction (Marinovich-inspired)', detail: 'Random bounce read and catch, alternating hands', reps: '20–30 sec x3', learnMoreUrl: 'https://www.youtube.com/results?search_query=tennis+ball+wall+reaction+drill' },
+    { name: 'Fast-switch split stance (Schroeder-inspired)', detail: 'Switch feet quickly, then freeze on balance', reps: '5 reps/side x3', learnMoreUrl: 'https://www.youtube.com/results?search_query=split+stance+switch+drill+speed' },
+    { name: 'Low line-hop quick switches', detail: 'Side-to-side line hops with crisp contacts', reps: '10–15 sec x3', learnMoreUrl: 'https://www.youtube.com/results?search_query=line+hops+quick+feet+drill' },
+  ],
+  6: [
+    { name: 'Visual callout reaction step (Marinovich-inspired)', detail: 'React to random left/right/front cues', reps: '20–30 sec x3', learnMoreUrl: 'https://www.youtube.com/results?search_query=visual+reaction+step+drill' },
+    { name: 'Iso switch punch-step (Schroeder-inspired)', detail: 'Brief iso hold, then explosive first step', reps: '3–4 reps/side x3', learnMoreUrl: 'https://www.youtube.com/results?search_query=isometric+to+explosive+first+step+drill' },
+    { name: 'Split-jump snap (quick twitch)', detail: 'Small range, fast intent, controlled landing', reps: '5 reps/side x2', learnMoreUrl: 'https://www.youtube.com/results?search_query=split+jump+quick+twitch+drill' },
+  ],
+};
+
 // ── G-O-A-T-A Floor (between Core Balance and Tai Chi) ───────────────────────
 export const GOATA_FLOOR = [
   { name: 'Child pose', detail: 'Alternating foot positions. Duration by energy.', reps: null, learnMoreUrl: 'https://www.youtube.com/results?search_query=child+pose+yoga' },

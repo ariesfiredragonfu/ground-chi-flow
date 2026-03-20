@@ -51,6 +51,7 @@ import {
   FOOT_EXERCISES_DAY_3,
   FOOT_EXERCISES_DAY_5,
   MAIN_EXERCISE_REGRESSIONS,
+  NERVOUS_SYSTEM_QUICK_TWITCH_BY_DAY,
 } from '../../constants/DailyRoutine';
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
@@ -347,6 +348,7 @@ export default function RoutinesScreen() {
 
   const mudras = routineDay === 1 ? HAND_MUDRAS_DAY_1 : routineDay === 3 ? HAND_MUDRAS_DAY_3 : HAND_MUDRAS_DAY_5;
   const feet = routineDay === 1 ? FOOT_EXERCISES_DAY_1 : routineDay === 3 ? FOOT_EXERCISES_DAY_3 : FOOT_EXERCISES_DAY_5;
+  const quickTwitchFinisher = NERVOUS_SYSTEM_QUICK_TWITCH_BY_DAY[routineDay] ?? [];
   const qigongRegressionByDay: Record<number, { title: string; videoUrl: string; videoTitle: string }> = {
     1: { title: 'Qigong regression: 8 Brocades basics', videoUrl: TAI_CHI_QI_GONG_BAGUA[1].videoUrl, videoTitle: TAI_CHI_QI_GONG_BAGUA[1].videoTitle },
     3: { title: 'Qigong regression: standing + breath flow', videoUrl: TAI_CHI_QI_GONG_BAGUA[4].videoUrl, videoTitle: TAI_CHI_QI_GONG_BAGUA[4].videoTitle },
@@ -727,6 +729,21 @@ export default function RoutinesScreen() {
             {NERVOUS_SYSTEM_FASCIA.map((ex, i) => (
               <ExerciseItem key={`ns-${i}`} name={ex.name} detail={ex.detail} reps={ex.reps} videoUrl={'videoUrl' in ex ? optionalString(ex.videoUrl) : undefined} learnMoreUrl={'learnMoreUrl' in ex ? optionalString(ex.learnMoreUrl) : undefined} onTimerComplete={onExerciseTimerComplete} />
             ))}
+            {quickTwitchFinisher.length ? (
+              <>
+                <Text style={[styles.subsectionLabel, { marginTop: 12 }]}>Marinovich/Schroeder + Quick Twitch Finisher</Text>
+                {quickTwitchFinisher.map((ex, i) => (
+                  <ExerciseItem
+                    key={`qt-${routineDay}-${i}`}
+                    name={ex.name}
+                    detail={ex.detail}
+                    reps={ex.reps}
+                    learnMoreUrl={ex.learnMoreUrl}
+                    onTimerComplete={onExerciseTimerComplete}
+                  />
+                ))}
+              </>
+            ) : null}
           </Section>
         )}
 
