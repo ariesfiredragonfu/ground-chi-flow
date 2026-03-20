@@ -23,12 +23,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/Colors';
 import { useRoutineProgress, useRoutineDay } from '../../hooks/useHealthData';
+import { useExerciseSettings } from '../../hooks/useExerciseSettings';
 import {
   MEDITATIONS,
   BREATHWORK,
   CORE_BALANCE,
   GOATA_FLOOR,
   TAI_CHI_QI_GONG_BAGUA,
+  QIGONG_TAICHI_INTRO,
   WARMUP,
   NERVOUS_SYSTEM_FASCIA,
   ROUTINE_DAY_NAMES,
@@ -38,6 +40,14 @@ import {
   LONGEVITY_CARDIO,
   VERTICAL_LOAD_PROGRESSION,
   BALANCE_FUN_SPORTS,
+  MEWING_FACE_EXERCISES_BY_LEVEL,
+  NECK_EXERCISES_BY_LEVEL,
+  HAND_MUDRAS_DAY_1,
+  HAND_MUDRAS_DAY_3,
+  HAND_MUDRAS_DAY_5,
+  FOOT_EXERCISES_DAY_1,
+  FOOT_EXERCISES_DAY_3,
+  FOOT_EXERCISES_DAY_5,
 } from '../../constants/DailyRoutine';
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
@@ -72,15 +82,69 @@ function Section({
 }
 
 // ── Exercise item ────────────────────────────────────────────────────────────
-function ExerciseItem({ name, detail, reps }: { name: string; detail: string | null; reps: string | null }) {
+type ExerciseItemProps = {
+  name: string;
+  detail: string | null;
+  reps: string | null;
+  videoUrl?: string | null;
+  learnMoreUrl?: string | null;
+  regression?: {
+    name: string;
+    detail: string | null;
+    reps: string | null;
+    videoUrl?: string | null;
+    learnMoreUrl?: string | null;
+  };
+};
+function ExerciseItem({ name, detail, reps, videoUrl, learnMoreUrl, regression }: ExerciseItemProps) {
+  const [useRegression, setUseRegression] = useState(false);
+
+  useEffect(() => {
+    setUseRegression(false);
+  }, [name, regression?.name]);
+
+  const activeVideoUrl = useRegression && regression?.videoUrl ? regression.videoUrl : videoUrl;
+  const activeLearnMoreUrl = useRegression && regression?.learnMoreUrl ? regression.learnMoreUrl : learnMoreUrl;
+  const activeName = useRegression && regression ? regression.name : name;
+  const activeDetail = useRegression && regression ? regression.detail : detail;
+  const activeReps = useRegression && regression ? regression.reps : reps;
+
+  const linkUrl = activeVideoUrl || activeLearnMoreUrl;
+  const linkLabel = activeVideoUrl ? 'Watch' : 'Learn more';
+
   return (
     <View style={styles.exerciseRow}>
-      <Text style={styles.exerciseName}>{name}</Text>
-      {(detail || reps) && (
-        <Text style={styles.exerciseDetail}>
-          {[detail, reps].filter(Boolean).join(' · ')}
-        </Text>
-      )}
+      <View style={styles.exerciseMain}>
+        <Text style={styles.exerciseName}>{activeName}</Text>
+        {(activeDetail || activeReps) && (
+          <Text style={styles.exerciseDetail}>
+            {[activeDetail, activeReps].filter(Boolean).join(' · ')}
+          </Text>
+        )}
+      </View>
+
+      <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+        {linkUrl ? (
+          <TouchableOpacity
+            style={styles.exerciseLinkBtn}
+            onPress={() => linkUrl && Linking.openURL(linkUrl)}
+          >
+            <Ionicons name={activeVideoUrl ? 'play-circle-outline' : 'open-outline'} size={16} color={Colors.primary} />
+            <Text style={styles.exerciseLinkText}>{linkLabel}</Text>
+          </TouchableOpacity>
+        ) : null}
+
+        {regression ? (
+          <TouchableOpacity
+            style={styles.exerciseLinkBtnOutline}
+            onPress={() => setUseRegression((v) => !v)}
+          >
+            <Text style={[styles.exerciseLinkText, { color: Colors.primary }]}>
+              {useRegression ? 'Full option' : 'Easier option'}
+            </Text>
+          </TouchableOpacity>
+        ) : null}
+      </View>
     </View>
   );
 }
@@ -92,13 +156,28 @@ export default function RoutinesScreen() {
   const mainBlockToday = isMainBlockDay(routineDay);
   const mainDay = getMainExerciseDay(routineDay);
   const mainExercises = getMainExercises(mainDay);
+  const { loading: loadingExerciseSettings, needsSelection, level, source, setLevel } = useExerciseSettings();
 
   const [activeBreathworkDay, setActiveBreathworkDay] = useState<number | null>(null);
   const [timeLeft, setTimeLeft] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [showDayPicker, setShowDayPicker] = useState(false);
+  const levelPromptedRef = useRef(false);
 
   useEffect(() => () => { clearInterval(timerRef.current!); }, []);
+
+  useEffect(() => {
+    if (loadingExerciseSettings) return;
+    if (!needsSelection) return;
+    if (levelPromptedRef.current) return;
+    levelPromptedRef.current = true;
+
+    Alert.alert('Choose your exercise level', 'Select one (you can change this anytime):', [
+      { text: 'Beginner', onPress: () => setLevel('beginner', 'signup') },
+      { text: 'Intermediate', onPress: () => setLevel('intermediate', 'signup') },
+      { text: 'Advanced', onPress: () => setLevel('advanced', 'signup') },
+    ]);
+  }, [loadingExerciseSettings, needsSelection, setLevel]);
 
   const meditation = MEDITATIONS[routineDay - 1];
   const breathwork = BREATHWORK[routineDay - 1];
@@ -132,6 +211,20 @@ export default function RoutinesScreen() {
 
   const breathworkCompleted = progress[breathwork.day]?.completed ?? false;
   const breathworkBadgeStyle = { ...styles.dayBadge, backgroundColor: breathwork.color + '22' };
+
+  const showMudrasAndFeet = routineDay === 1 || routineDay === 3 || routineDay === 5;
+
+  function pickTwoLadderExercises<T extends { name: string }>(items: T[]) {
+    if (items.length <= 2) return items;
+    const start = (routineDay - 1) % items.length;
+    return [items[start], items[(start + 1) % items.length]];
+  }
+
+  const faceExercises = pickTwoLadderExercises(MEWING_FACE_EXERCISES_BY_LEVEL[level] || MEWING_FACE_EXERCISES_BY_LEVEL.beginner);
+  const neckExercises = pickTwoLadderExercises(NECK_EXERCISES_BY_LEVEL[level] || NECK_EXERCISES_BY_LEVEL.beginner);
+
+  const mudras = routineDay === 1 ? HAND_MUDRAS_DAY_1 : routineDay === 3 ? HAND_MUDRAS_DAY_3 : HAND_MUDRAS_DAY_5;
+  const feet = routineDay === 1 ? FOOT_EXERCISES_DAY_1 : routineDay === 3 ? FOOT_EXERCISES_DAY_3 : FOOT_EXERCISES_DAY_5;
 
   const startBreathworkTimer = useCallback((day: number, duration: number) => {
     clearInterval(timerRef.current!);
@@ -177,7 +270,7 @@ export default function RoutinesScreen() {
           Routine Day {routineDay} ({dayName}-style) · {mainBlockToday ? `Main: ${mainDay}` : 'Nervous System & Fascia'}
         </Text>
         <Text style={styles.screenSub2}>
-          Meditation · Breathwork · Core Balance · GOATA · Tai Chi · {mainBlockToday ? 'Main' : 'Nervous System'} · Optional cardio
+          Meditation · Breathwork · Mewing/Face · Neck · Core Balance · GOATA · Qigong · Tai Chi · {mainBlockToday ? 'Main' : 'Nervous System'} · Optional cardio
         </Text>
 
         {/* Day shift controls */}
@@ -196,6 +289,22 @@ export default function RoutinesScreen() {
           <TouchableOpacity style={styles.dayBtn} onPress={pushForward}>
             <Text style={styles.dayBtnText}>Push forward</Text>
             <Ionicons name="chevron-forward" size={20} color={Colors.primary} />
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.levelSelectorRow}>
+          <Text style={styles.levelSelectorLabel}>Exercise Level</Text>
+          <TouchableOpacity
+            style={styles.levelSelectorBtn}
+            onPress={() => {
+              Alert.alert(`Exercise Level (source: ${source})`, 'Choose your level:', [
+                { text: 'Beginner', onPress: () => setLevel('beginner', 'user') },
+                { text: 'Intermediate', onPress: () => setLevel('intermediate', 'user') },
+                { text: 'Advanced', onPress: () => setLevel('advanced', 'user') },
+              ]);
+            }}
+          >
+            <Text style={styles.levelSelectorBtnText}>{level[0].toUpperCase() + level.slice(1)}</Text>
           </TouchableOpacity>
         </View>
         {showDayPicker && (
@@ -275,11 +384,69 @@ export default function RoutinesScreen() {
           </View>
         </Section>
 
+        {/* 3. Mewing & Face (Level-based) */}
+        <Section title="Mewing & Face (Level-based)" icon="body-outline" color={Colors.primary}>
+          <Text style={styles.attributionHint}>Pain-free posture/mobility suggestions.</Text>
+          {faceExercises.map((ex, i) => (
+            <ExerciseItem
+              key={`face-${i}-${ex.name}`}
+              name={ex.name}
+              detail={ex.detail}
+              reps={ex.reps}
+              learnMoreUrl={ex.learnMoreUrl}
+              regression={ex.regression}
+            />
+          ))}
+        </Section>
+
+        {/* 4. Neck Exercises (Level-based) */}
+        <Section title="Neck Exercises (Level-based)" icon="pulse-outline" color={Colors.secondary}>
+          {neckExercises.map((ex, i) => (
+            <ExerciseItem
+              key={`neck-${i}-${ex.name}`}
+              name={ex.name}
+              detail={ex.detail}
+              reps={ex.reps}
+              learnMoreUrl={ex.learnMoreUrl}
+              regression={ex.regression}
+            />
+          ))}
+        </Section>
+
+        {/* Days 1/3/5 extras */}
+        {showMudrasAndFeet ? (
+          <>
+            <Section title="Hand Mudras (Days 1/3/5)" icon="leaf-outline" color={Colors.gut}>
+              {mudras.map((ex, i) => (
+                <ExerciseItem
+                  key={`mudra-${i}-${ex.name}`}
+                  name={ex.name}
+                  detail={ex.detail}
+                  reps={ex.reps}
+                  learnMoreUrl={ex.learnMoreUrl}
+                />
+              ))}
+            </Section>
+
+            <Section title="Foot Exercises (Days 1/3/5)" icon="fitness-outline" color={Colors.energy}>
+              {feet.map((ex, i) => (
+                <ExerciseItem
+                  key={`foot-${i}-${ex.name}`}
+                  name={ex.name}
+                  detail={ex.detail}
+                  reps={ex.reps}
+                  learnMoreUrl={ex.learnMoreUrl}
+                />
+              ))}
+            </Section>
+          </>
+        ) : null}
+
         {/* 3. Core Balance */}
         <Section title="3. Core Balance" icon="body-outline" color={Colors.primary}>
           <Text style={styles.attributionHint}>Dr. Ryan Peebles — corebalancetraining.com</Text>
           {CORE_BALANCE.map((ex, i) => (
-            <ExerciseItem key={i} name={ex.name} detail={ex.detail} reps={ex.reps} />
+            <ExerciseItem key={i} name={ex.name} detail={ex.detail} reps={ex.reps} videoUrl={'videoUrl' in ex ? ex.videoUrl : undefined} learnMoreUrl={'learnMoreUrl' in ex ? ex.learnMoreUrl : undefined} />
           ))}
         </Section>
 
@@ -287,12 +454,15 @@ export default function RoutinesScreen() {
         <Section title="4. G-O-A-T-A Floor" icon="fitness-outline" color={Colors.secondary}>
           <Text style={styles.attributionHint}>GOATA / Nick Ball — nickballtraining.com</Text>
           {GOATA_FLOOR.map((ex, i) => (
-            <ExerciseItem key={i} name={ex.name} detail={ex.detail} reps={ex.reps} />
+            <ExerciseItem key={i} name={ex.name} detail={ex.detail} reps={ex.reps} videoUrl={'videoUrl' in ex ? ex.videoUrl : undefined} learnMoreUrl={'learnMoreUrl' in ex ? ex.learnMoreUrl : undefined} />
           ))}
         </Section>
 
-        {/* 5. Tai Chi / Qigong / Bagua */}
-        <Section title="5. Tai Chi / Qigong / Bagua" icon="leaf-outline" color={Colors.gut}>
+        {/* 5. Qigong & Tai Chi */}
+        <Section title="5. Qigong & Tai Chi" icon="leaf-outline" color={Colors.gut}>
+          <View style={styles.qigongIntro}>
+            <Text style={styles.qigongIntroText}>{QIGONG_TAICHI_INTRO}</Text>
+          </View>
           <View style={styles.sessionCard}>
             <Text style={styles.sessionTitle}>Day {taiChiDay.day}: {taiChiDay.title}</Text>
             <Text style={styles.sessionDesc}>{taiChiDay.description}</Text>
@@ -321,18 +491,18 @@ export default function RoutinesScreen() {
             <Text style={styles.attributionHint}>ATG (Ben Patrick) + GOATA</Text>
             <Text style={styles.subsectionLabel}>Warm-up</Text>
             {WARMUP.map((ex, i) => (
-              <ExerciseItem key={`w-${i}`} name={ex.name} detail={ex.detail} reps={ex.reps} />
+              <ExerciseItem key={`w-${i}`} name={ex.name} detail={ex.detail} reps={ex.reps} videoUrl={'videoUrl' in ex ? ex.videoUrl : undefined} learnMoreUrl={'learnMoreUrl' in ex ? ex.learnMoreUrl : undefined} />
             ))}
             <Text style={[styles.subsectionLabel, { marginTop: 12 }]}>Main exercises</Text>
             {mainExercises.map((ex, i) => (
-              <ExerciseItem key={`m-${i}`} name={ex.name} detail={ex.detail} reps={ex.reps} />
+              <ExerciseItem key={`m-${i}`} name={ex.name} detail={ex.detail} reps={ex.reps} videoUrl={'videoUrl' in ex ? ex.videoUrl : undefined} learnMoreUrl={'learnMoreUrl' in ex ? ex.learnMoreUrl : undefined} />
             ))}
           </Section>
         ) : (
           <Section title="6. Nervous System & Fascia" icon="pulse-outline" color={Colors.hrv}>
             <Text style={styles.nsFasciaHint}>Lighter block. Vagal tone, fascia release. ~15–25 min.</Text>
             {NERVOUS_SYSTEM_FASCIA.map((ex, i) => (
-              <ExerciseItem key={`ns-${i}`} name={ex.name} detail={ex.detail} reps={ex.reps} />
+              <ExerciseItem key={`ns-${i}`} name={ex.name} detail={ex.detail} reps={ex.reps} videoUrl={'videoUrl' in ex ? ex.videoUrl : undefined} learnMoreUrl={'learnMoreUrl' in ex ? ex.learnMoreUrl : undefined} />
             ))}
           </Section>
         )}
@@ -400,7 +570,7 @@ export default function RoutinesScreen() {
           onPress={() => router.push('/resources')}
         >
           <Ionicons name="library-outline" size={18} color={Colors.primary} />
-          <Text style={styles.resourcesLinkText}>Sources & attributions (Core Balance, ATG, GOATA, Tai Chi)</Text>
+          <Text style={styles.resourcesLinkText}>Sources & attributions (Core Balance, ATG, GOATA, Qigong & Tai Chi)</Text>
         </TouchableOpacity>
 
         <View style={styles.footer}>
@@ -426,6 +596,17 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     gap: 8,
   },
+  levelSelectorRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 14, paddingHorizontal: 2 },
+  levelSelectorLabel: { color: Colors.textSecondary, fontSize: 12, fontWeight: '700' },
+  levelSelectorBtn: {
+    backgroundColor: `${Colors.primary}22`,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: `${Colors.primary}44`,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  levelSelectorBtnText: { color: Colors.primary, fontSize: 13, fontWeight: '800' },
   dayBtn: {
     flex: 1,
     flexDirection: 'row',
@@ -497,6 +678,15 @@ const styles = StyleSheet.create({
   sessionTitle: { fontSize: 15, fontWeight: '700', color: Colors.textPrimary, marginBottom: 4 },
   sessionDesc: { color: Colors.textSecondary, fontSize: 13, lineHeight: 18 },
   durationHint: { color: Colors.textMuted, fontSize: 12, marginTop: 6 },
+  qigongIntro: {
+    backgroundColor: Colors.bgCardLight,
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  qigongIntroText: { fontSize: 13, color: Colors.textSecondary, lineHeight: 19, fontStyle: 'italic' },
   videoLink: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -566,9 +756,35 @@ const styles = StyleSheet.create({
     marginBottom: 6,
     borderWidth: 1,
     borderColor: Colors.border,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
   },
+  exerciseMain: { flex: 1 },
   exerciseName: { fontSize: 14, fontWeight: '600', color: Colors.textPrimary },
   exerciseDetail: { fontSize: 12, color: Colors.textSecondary, marginTop: 2 },
+  exerciseLinkBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    backgroundColor: `${Colors.primary}18`,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: `${Colors.primary}44`,
+  },
+  exerciseLinkBtnOutline: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    backgroundColor: 'transparent',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: `${Colors.primary}44`,
+  },
+  exerciseLinkText: { fontSize: 12, color: Colors.primary, fontWeight: '600' },
 
   cardioRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   cardioTitle: { fontSize: 14, fontWeight: '700', color: Colors.energy },

@@ -33,42 +33,45 @@ export const BREATHWORK = [
 ];
 
 // ── Core Balance (every day) ─────────────────────────────────────────────────
-// Cat/Cow added for fascia + nervous system (spine, breath)
+// learnMoreUrl = YouTube search with exercise name pre-filled; user can hit Enter or edit.
 export const CORE_BALANCE = [
-  { name: 'Lay on back — activate core triangle', detail: 'Activate core, glutes, pelvic floor. Sink lumbar to floor. Breathe through bottom of lumbar into the floor.', reps: null },
-  { name: 'Leg extensions (on back)', detail: 'Core balance leg extensions. Activate glute.', reps: null },
-  { name: 'Bridge', detail: null, reps: null },
-  { name: 'Bridge butterflies', detail: null, reps: null },
-  { name: 'Bridge leg extensions', detail: null, reps: null },
-  { name: 'Core triangle (on stomach)', detail: 'Laying on stomach, activate core triangle.', reps: null },
-  { name: 'Superman', detail: null, reps: null },
-  { name: 'Cat/Cow (all fours)', detail: 'Flow spine with breath. 5–10 rounds. Fascia + vagal.', reps: null },
-  { name: 'Core activation (all fours)', detail: null, reps: null },
-  { name: 'Bird dog', detail: 'Arm up, opposite leg up. Then other side.', reps: null },
-  { name: 'Single-leg balance', detail: '30 sec eyes open, 15 sec eyes closed per side. Fall prevention, stability.', reps: '1x per side' },
+  { name: 'Lay on back — activate core triangle', detail: 'Activate core, glutes, pelvic floor. Sink lumbar to floor. Breathe through bottom of lumbar into the floor.', reps: null, learnMoreUrl: 'https://www.youtube.com/results?search_query=core+triangle+activation+floor' },
+  { name: 'Leg extensions (on back)', detail: 'Core balance leg extensions. Activate glute.', reps: null, learnMoreUrl: 'https://www.youtube.com/results?search_query=leg+extensions+on+back+core' },
+  { name: 'Bridge', detail: null, reps: null, learnMoreUrl: 'https://www.youtube.com/results?search_query=glute+bridge+exercise' },
+  { name: 'Bridge butterflies', detail: null, reps: null, learnMoreUrl: 'https://www.youtube.com/results?search_query=bridge+butterfly+exercise' },
+  { name: 'Bridge leg extensions', detail: null, reps: null, learnMoreUrl: 'https://www.youtube.com/results?search_query=bridge+leg+extension+exercise' },
+  { name: 'Core triangle (on stomach)', detail: 'Laying on stomach, activate core triangle.', reps: null, learnMoreUrl: 'https://www.youtube.com/results?search_query=core+triangle+prone+exercise' },
+  { name: 'Superman', detail: null, reps: null, learnMoreUrl: 'https://www.youtube.com/results?search_query=superman+exercise+back' },
+  { name: 'Cat/Cow (all fours)', detail: 'Flow spine with breath. 5–10 rounds. Fascia + vagal.', reps: null, learnMoreUrl: 'https://www.youtube.com/results?search_query=cat+cow+stretch+yoga' },
+  { name: 'Core activation (all fours)', detail: null, reps: null, learnMoreUrl: 'https://www.youtube.com/results?search_query=core+activation+all+fours' },
+  { name: 'Bird dog', detail: 'Arm up, opposite leg up. Then other side.', reps: null, learnMoreUrl: 'https://www.youtube.com/results?search_query=bird+dog+exercise' },
+  { name: 'Single-leg balance', detail: '30 sec eyes open, 15 sec eyes closed per side. Fall prevention, stability.', reps: '1x per side', learnMoreUrl: 'https://www.youtube.com/results?search_query=single+leg+balance+exercise' },
 ];
 
 // ── Nervous System & Fascia (off-days: Tue, Thu, Sat, Sun) ────────────────────
-// Lighter block when main exercises are not done. ~15–25 min.
-// Child pose & Cat/Cow already in Core Balance + G-O-A-T-A Floor.
+// learnMoreUrl = YouTube search with exercise name pre-filled.
 export const NERVOUS_SYSTEM_FASCIA = [
-  { name: 'Rosenberg Basic Exercise (vagal)', detail: 'Hands behind head, look to one elbow 1 min. Sigh/yawn = done. Other side. Signals safety to brain.', reps: '1x per side' },
-  { name: '4-6 Polyvagal breath', detail: 'Inhale 4s, exhale 6s. 3–5 min. Longer exhale = parasympathetic.', reps: '1x' },
-  { name: 'Humming or OM chant', detail: '2–5 min. Vibrations stimulate vagus nerve.', reps: '1x' },
-  { name: 'Supported butterfly (Supta Baddha Konasana)', detail: 'Reclining hip opener. 5–10 min. Inner thigh fascia.', reps: '1x' },
-  { name: 'Foam roll or tennis ball', detail: 'Upper back, glutes, calves. Sustained pressure, never sharp pain. 2–3 min per area.', reps: '1x' },
-  { name: 'Twisting + breath', detail: 'Seated twist. Breathe into stretch. 1 min per side.', reps: '1x' },
-  { name: 'Cold face splash (optional)', detail: '10–30 sec. Activates vagal calming response.', reps: '1x' },
+  { name: 'Rosenberg Basic Exercise (vagal)', detail: 'Hands behind head, look to one elbow 1 min. Sigh/yawn = done. Other side. Signals safety to brain.', reps: '1x per side', learnMoreUrl: 'https://www.youtube.com/results?search_query=Rosenberg+basic+exercise+vagal' },
+  { name: '4-6 Polyvagal breath', detail: 'Inhale 4s, exhale 6s. 3–5 min. Longer exhale = parasympathetic.', reps: '1x', learnMoreUrl: 'https://www.youtube.com/results?search_query=polyvagal+breathing+4+6' },
+  { name: 'Humming or OM chant', detail: '2–5 min. Vibrations stimulate vagus nerve.', reps: '1x', learnMoreUrl: 'https://www.youtube.com/results?search_query=humming+vagus+nerve+exercise' },
+  { name: 'Supported butterfly (Supta Baddha Konasana)', detail: 'Reclining hip opener. 5–10 min. Inner thigh fascia.', reps: '1x', learnMoreUrl: 'https://www.youtube.com/results?search_query=supta+baddha+konasana+reclining+butterfly' },
+  { name: 'Foam roll or tennis ball', detail: 'Upper back, glutes, calves. Sustained pressure, never sharp pain. 2–3 min per area.', reps: '1x', learnMoreUrl: 'https://www.youtube.com/results?search_query=foam+rolling+technique' },
+  { name: 'Twisting + breath', detail: 'Seated twist. Breathe into stretch. 1 min per side.', reps: '1x', learnMoreUrl: 'https://www.youtube.com/results?search_query=seated+twist+stretch+yoga' },
+  { name: 'Cold face splash (optional)', detail: '10–30 sec. Activates vagal calming response.', reps: '1x', learnMoreUrl: 'https://www.youtube.com/results?search_query=cold+face+splash+vagus+nerve' },
 ];
 
 // ── G-O-A-T-A Floor (between Core Balance and Tai Chi) ───────────────────────
 export const GOATA_FLOOR = [
-  { name: 'Child pose', detail: 'Alternating foot positions. Duration by energy.', reps: null },
-  { name: 'Japanese seated squat', detail: 'Seiza or similar. Time by energy.', reps: null },
+  { name: 'Child pose', detail: 'Alternating foot positions. Duration by energy.', reps: null, learnMoreUrl: 'https://www.youtube.com/results?search_query=child+pose+yoga' },
+  { name: 'Japanese seated squat', detail: 'Seiza or similar. Time by energy.', reps: null, learnMoreUrl: 'https://www.youtube.com/results?search_query=seiza+japanese+seated+squat' },
 ];
 
 // ── Tai Chi / Qigong / Bagua (7-day rotation with video links) ────────────────
 // Free, shareable tutorials. Tap to open in browser.
+// Qigong = foundation (single movements that build chi). Tai Chi = flowing form that combines them.
+export const QIGONG_TAICHI_INTRO =
+  'Qigong is the foundation — simple, single movements that build and cultivate chi. Tai Chi is when you put those movements together in a flowing form. Start with Qigong days to build the basics; Tai Chi forms flow from there.';
+
 export const TAI_CHI_QI_GONG_BAGUA = [
   {
     day: 1,
@@ -137,60 +140,329 @@ export const TAI_CHI_QI_GONG_BAGUA = [
 
 // ── Warm-up (every day before main exercises) ────────────────────────────────
 export const WARMUP = [
-  { name: 'Sled or resisted treadmill backwards', detail: '100 yards or 1 min', reps: '2x' },
-  { name: 'Sled or resisted treadmill forward', detail: '50 yards or 30 sec', reps: '2x' },
-  { name: 'Calf stretch', detail: '1 min per side on slant board', reps: '1x' },
-  { name: 'Tibialis raise', detail: '12–15 reps', reps: '2x' },
-  { name: 'Seated calf raise', detail: 'Or alternate with straight leg', reps: '2x' },
+  { name: 'Sled or resisted treadmill backwards', detail: '100 yards or 1 min', reps: '2x', learnMoreUrl: 'https://www.youtube.com/results?search_query=sled+walk+backwards' },
+  { name: 'Sled or resisted treadmill forward', detail: '50 yards or 30 sec', reps: '2x', learnMoreUrl: 'https://www.youtube.com/results?search_query=sled+push+exercise' },
+  { name: 'Calf stretch', detail: '1 min per side on slant board', reps: '1x', learnMoreUrl: 'https://www.youtube.com/results?search_query=calf+stretch+slant+board' },
+  { name: 'Tibialis raise', detail: '12–15 reps', reps: '2x', learnMoreUrl: 'https://www.youtube.com/results?search_query=tibialis+raise+exercise' },
+  { name: 'Seated calf raise', detail: 'Or alternate with straight leg', reps: '2x', learnMoreUrl: 'https://www.youtube.com/results?search_query=seated+calf+raise' },
+];
+
+// ── Mewing / Face / Neck (level-based) ──────────────────────────────────────
+// These are intentionally non-clinical placeholders with YouTube search links
+// so the client can pick a video and we avoid licensing issues.
+export type ExerciseLevel = 'beginner' | 'intermediate' | 'advanced';
+export type LadderExercise = {
+  name: string;
+  detail: string | null;
+  reps: string | null;
+  learnMoreUrl?: string | null;
+  regression?: {
+    name: string;
+    detail: string | null;
+    reps: string | null;
+    learnMoreUrl?: string | null;
+  };
+};
+
+export const MEWING_FACE_EXERCISES_BY_LEVEL: Record<ExerciseLevel, LadderExercise[]> = {
+  beginner: [
+    {
+      name: 'Gentle tongue suction (mew)',
+      detail: 'Nasal breathing · relax jaw · stop if painful',
+      reps: '1–2 min total',
+      learnMoreUrl: 'https://www.youtube.com/results?search_query=gentle+mewing+tongue+suction+nasal+breathing',
+    },
+    {
+      name: 'Tongue posture reset (micro-holds)',
+      detail: 'Light suction + swallow if needed; keep it comfortable',
+      reps: '30–45 sec holds x3',
+      learnMoreUrl: 'https://www.youtube.com/results?search_query=tongue+posture+reset+exercise+mewing',
+    },
+    {
+      name: 'Masseter/cheek light engagement',
+      detail: 'Controlled effort (no clenching); breathe steadily',
+      reps: '8–10 reps',
+      learnMoreUrl: 'https://www.youtube.com/results?search_query=masseter+cheek+engagement+exercise+no+clench',
+    },
+  ],
+  intermediate: [
+    {
+      name: 'Mewing hold progression',
+      detail: 'Nasal breathing · jaw relaxed · steady posture',
+      reps: '2 min x2',
+      learnMoreUrl: 'https://www.youtube.com/results?search_query=mewing+hold+progression+2+minutes+nasal+breathing',
+    },
+    {
+      name: 'Tongue sweep + reset',
+      detail: 'Slow tongue movement for posture control; pain-free',
+      reps: '10–12 slow reps',
+      learnMoreUrl: 'https://www.youtube.com/results?search_query=tongue+sweep+reset+mewing+exercise',
+    },
+    {
+      name: 'Chin/neck relaxed alignment reset',
+      detail: 'Reduce forward head; re-find tongue-on-palate position',
+      reps: '2–3 rounds',
+      learnMoreUrl: 'https://www.youtube.com/results?search_query=tongue+palate+alignment+reset+chin+neck+posture',
+    },
+  ],
+  advanced: [
+    {
+      name: 'Extended mewing sets (timed suction)',
+      detail: '2 sets · keep it comfortable; never push through pain',
+      reps: '2 x 2–3 min',
+      learnMoreUrl: 'https://www.youtube.com/results?search_query=extended+mewing+sets+timed+suction',
+      regression: {
+        name: 'Mewing hold progression',
+        detail: 'Nasal breathing · jaw relaxed · steady posture',
+        reps: '2 min x2',
+        learnMoreUrl: 'https://www.youtube.com/results?search_query=mewing+hold+progression+2+minutes+nasal+breathing',
+      },
+    },
+    {
+      name: 'Tongue lateral micro-control',
+      detail: 'Gentle side-to-side control; no strain',
+      reps: '5 reps/side',
+      learnMoreUrl: 'https://www.youtube.com/results?search_query=tongue+lateral+micro+control+mewing+exercise',
+      regression: {
+        name: 'Tongue posture reset (micro-holds)',
+        detail: 'Light suction + swallow if needed; keep it comfortable',
+        reps: '30–45 sec holds x3',
+        learnMoreUrl: 'https://www.youtube.com/results?search_query=tongue+posture+reset+exercise+mewing',
+      },
+    },
+    {
+      name: 'Supported resistance mewing (very light)',
+      detail: 'Support only (optional); stop immediately if irritated',
+      reps: '3 x 30–45 sec',
+      learnMoreUrl: 'https://www.youtube.com/results?search_query=supported+resistance+mewing+very+light',
+      regression: {
+        name: 'Gentle tongue suction (mew)',
+        detail: 'Nasal breathing · relax jaw · stop if painful',
+        reps: '1–2 min total',
+        learnMoreUrl: 'https://www.youtube.com/results?search_query=gentle+mewing+tongue+suction+nasal+breathing',
+      },
+    },
+  ],
+};
+
+export const NECK_EXERCISES_BY_LEVEL: Record<ExerciseLevel, LadderExercise[]> = {
+  beginner: [
+    {
+      name: 'Chin tuck (deep neck flexor) isometric',
+      detail: 'Small range · feel back of neck lengthen',
+      reps: '5 sec holds x6',
+      learnMoreUrl: 'https://www.youtube.com/results?search_query=chin+tuck+deep+neck+flexor+isometric+exercise',
+    },
+    {
+      name: 'Neck nods (small-range)',
+      detail: 'Controlled tempo; stop if any sharp pain',
+      reps: '10 reps',
+      learnMoreUrl: 'https://www.youtube.com/results?search_query=neck+nods+small+range+exercise',
+    },
+    {
+      name: 'Upper trap / levator scap stretch',
+      detail: 'Gentle stretch only',
+      reps: '45–60 sec/side',
+      learnMoreUrl: 'https://www.youtube.com/results?search_query=upper+trap+levator+scap+stretch+exercise',
+    },
+  ],
+  intermediate: [
+    {
+      name: 'Chin tuck + slight rotation',
+      detail: 'Half range; breathe steadily',
+      reps: '5–8 reps/side',
+      learnMoreUrl: 'https://www.youtube.com/results?search_query=chin+tuck+slight+rotation+exercise',
+    },
+    {
+      name: 'Side-neck isometrics',
+      detail: 'Use gentle force; keep head aligned',
+      reps: '10 sec holds x3/side',
+      learnMoreUrl: 'https://www.youtube.com/results?search_query=neck+side+isometric+exercise+10+sec',
+    },
+    {
+      name: 'Scapular retraction (light band if available)',
+      detail: 'Shoulders back/down; avoid shrugging',
+      reps: '12 reps x2',
+      learnMoreUrl: 'https://www.youtube.com/results?search_query=scapular+retraction+light+band+exercise',
+    },
+  ],
+  advanced: [
+    {
+      name: 'Deep neck flexor endurance',
+      detail: 'Long, controlled chin-tuck holds',
+      reps: '30–45 sec total x2',
+      learnMoreUrl: 'https://www.youtube.com/results?search_query=deep+neck+flexor+endurance+chin+tuck+exercise',
+      regression: {
+        name: 'Chin tuck isometric (beginner)',
+        detail: 'Small range · feel back of neck lengthen',
+        reps: '5 sec holds x6',
+        learnMoreUrl: 'https://www.youtube.com/results?search_query=chin+tuck+deep+neck+flexor+isometric+exercise',
+      },
+    },
+    {
+      name: 'Tempo nods (with pause)',
+      detail: 'Add 2 sec pause at neutral · slow',
+      reps: '10 slow reps',
+      learnMoreUrl: 'https://www.youtube.com/results?search_query=tempo+neck+nods+2+sec+pause+exercise',
+      regression: {
+        name: 'Neck nods (small-range)',
+        detail: 'Controlled tempo; stop if any sharp pain',
+        reps: '10 reps',
+        learnMoreUrl: 'https://www.youtube.com/results?search_query=neck+nods+small+range+exercise',
+      },
+    },
+    {
+      name: 'Supported neck extension isometric',
+      detail: 'Supported/controlled; no pinching pain',
+      reps: '8–10 sec holds x4',
+      learnMoreUrl: 'https://www.youtube.com/results?search_query=supported+neck+extension+isometric+exercise',
+      regression: {
+        name: 'Upper trap / levator scap stretch',
+        detail: 'Gentle stretch only',
+        reps: '45–60 sec/side',
+        learnMoreUrl: 'https://www.youtube.com/results?search_query=upper+trap+levator+scap+stretch+exercise',
+      },
+    },
+  ],
+};
+
+export const HAND_MUDRAS_DAY_1: LadderExercise[] = [
+  {
+    name: 'Gyan Mudra',
+    detail: 'Thumb + index finger touching; relax jaw; calm breathing',
+    reps: '5–10 min',
+    learnMoreUrl: 'https://www.youtube.com/results?search_query=gyan+mudra+how+to',
+  },
+  {
+    name: 'Prana Mudra',
+    detail: 'Focus on energising + breath support',
+    reps: '5–10 min',
+    learnMoreUrl: 'https://www.youtube.com/results?search_query=prana+mudra+how+to',
+  },
+];
+
+export const HAND_MUDRAS_DAY_3: LadderExercise[] = [
+  {
+    name: 'Shunya Mudra',
+    detail: 'Balance focus; gentle and steady',
+    reps: '5–10 min',
+    learnMoreUrl: 'https://www.youtube.com/results?search_query=shunya+mudra+how+to',
+  },
+  {
+    name: 'Prithvi Mudra',
+    detail: 'Grounding focus',
+    reps: '5–10 min',
+    learnMoreUrl: 'https://www.youtube.com/results?search_query=prithvi+mudra+how+to',
+  },
+];
+
+export const HAND_MUDRAS_DAY_5: LadderExercise[] = [
+  {
+    name: 'Vayu Mudra',
+    detail: 'Gentle circulation + balance (comfort only)',
+    reps: '5–10 min',
+    learnMoreUrl: 'https://www.youtube.com/results?search_query=vayu+mudra+how+to',
+  },
+  {
+    name: 'Apana Mudra',
+    detail: 'Slow calming attention downward',
+    reps: '5–10 min',
+    learnMoreUrl: 'https://www.youtube.com/results?search_query=apana+mudra+how+to',
+  },
+];
+
+export const FOOT_EXERCISES_DAY_1: LadderExercise[] = [
+  {
+    name: 'Toe yoga (toe doming)',
+    detail: 'Keep big toe controlled; avoid cramping',
+    reps: '10–15 reps',
+    learnMoreUrl: 'https://www.youtube.com/results?search_query=toe+yoga+toe+doming+exercise',
+  },
+  {
+    name: 'Ankle circles + range',
+    detail: 'Slow circles each direction',
+    reps: '30–45 sec/side',
+    learnMoreUrl: 'https://www.youtube.com/results?search_query=ankle+circles+range+of+motion+exercise',
+  },
+];
+
+export const FOOT_EXERCISES_DAY_3: LadderExercise[] = [
+  {
+    name: 'Short-foot exercise (arch lift)',
+    detail: 'Lift arch without curling toes',
+    reps: '10 reps x2',
+    learnMoreUrl: 'https://www.youtube.com/results?search_query=short+foot+exercise+arch+lift',
+  },
+  {
+    name: 'Towel scrunches',
+    detail: 'Slow pulls; stop if sharp pain',
+    reps: '30–60 sec x2',
+    learnMoreUrl: 'https://www.youtube.com/results?search_query=towel+scrunch+foot+exercise',
+  },
+];
+
+export const FOOT_EXERCISES_DAY_5: LadderExercise[] = [
+  {
+    name: 'Big toe extension stretch',
+    detail: 'Gentle stretch; keep ankle neutral',
+    reps: '45–60 sec/side',
+    learnMoreUrl: 'https://www.youtube.com/results?search_query=big+toe+extension+stretch+exercise',
+  },
+  {
+    name: 'Heel-to-toe walk (control)',
+    detail: 'Slow, controlled steps',
+    reps: '30–60 sec',
+    learnMoreUrl: 'https://www.youtube.com/results?search_query=heel+to+toe+walk+balance+exercise',
+  },
 ];
 
 // ── Day A (Monday) ───────────────────────────────────────────────────────────
 export const DAY_A_EXERCISES = [
-  { name: 'G-O-A-T-A Lunge', detail: '10–12 reps per side', reps: '3x' },
-  { name: 'Stretch strength deadlift', detail: '15–20 reps', reps: '2x' },
-  { name: 'L-sit', detail: '20 sec', reps: '2x' },
-  { name: 'Active couch stretch', detail: '1 min per side', reps: '1x' },
-  { name: 'Elephant walk', detail: '15 reps per side', reps: '1x' },
-  { name: 'Piriformis push-ups', detail: '20 reps per side', reps: '1x' },
-  { name: 'Pancake standing pulse', detail: '20 reps', reps: '1x' },
-  { name: 'External rotation', detail: '5 reps eccentric per side', reps: '1x' },
-  { name: 'Pull over', detail: '10–12 reps', reps: '1x' },
-  { name: 'Trap 3 raise', detail: '5 reps eccentric', reps: '1x' },
-  { name: 'Wrist pronation/supination', detail: '12 reps', reps: '1x' },
-  { name: 'Dead hang or farmer\'s carry', detail: 'Grip strength: 20–40 sec hang, or 30 sec carry per hand. Longevity marker.', reps: '2x' },
+  { name: 'G-O-A-T-A Lunge', detail: '10–12 reps per side', reps: '3x', learnMoreUrl: 'https://www.youtube.com/results?search_query=GOATA+lunge+exercise' },
+  { name: 'Stretch strength deadlift', detail: '15–20 reps', reps: '2x', learnMoreUrl: 'https://www.youtube.com/results?search_query=stretch+strength+deadlift' },
+  { name: 'L-sit', detail: '20 sec', reps: '2x', learnMoreUrl: 'https://www.youtube.com/results?search_query=L-sit+exercise' },
+  { name: 'Active couch stretch', detail: '1 min per side', reps: '1x', learnMoreUrl: 'https://www.youtube.com/results?search_query=active+couch+stretch' },
+  { name: 'Elephant walk', detail: '15 reps per side', reps: '1x', learnMoreUrl: 'https://www.youtube.com/results?search_query=elephant+walk+exercise' },
+  { name: 'Piriformis push-ups', detail: '20 reps per side', reps: '1x', learnMoreUrl: 'https://www.youtube.com/results?search_query=piriformis+push+up+exercise' },
+  { name: 'Pancake standing pulse', detail: '20 reps', reps: '1x', learnMoreUrl: 'https://www.youtube.com/results?search_query=pancake+stretch+standing+pulse' },
+  { name: 'External rotation', detail: '5 reps eccentric per side', reps: '1x', learnMoreUrl: 'https://www.youtube.com/results?search_query=external+rotation+shoulder+exercise' },
+  { name: 'Pull over', detail: '10–12 reps', reps: '1x', learnMoreUrl: 'https://www.youtube.com/results?search_query=pull+over+exercise' },
+  { name: 'Trap 3 raise', detail: '5 reps eccentric', reps: '1x', learnMoreUrl: 'https://www.youtube.com/results?search_query=trap+3+raise+exercise' },
+  { name: 'Wrist pronation/supination', detail: '12 reps', reps: '1x', learnMoreUrl: 'https://www.youtube.com/results?search_query=wrist+pronation+supination+exercise' },
+  { name: 'Dead hang or farmer\'s carry', detail: 'Grip strength: 20–40 sec hang, or 30 sec carry per hand. Longevity marker.', reps: '2x', learnMoreUrl: 'https://www.youtube.com/results?search_query=dead+hang+farmer+carry+exercise' },
 ];
 
 // ── Day B (Wednesday) ────────────────────────────────────────────────────────
 export const DAY_B_EXERCISES = [
-  { name: 'Seated calf raise', detail: '12–15 reps, 20–25 lb', reps: '2x' },
-  { name: 'Slant or Hackenschmidt squat', detail: '15–20 reps', reps: '3x' },
-  { name: 'L-sit', detail: '5 reps', reps: '2x' },
-  { name: 'Hip flexor lift', detail: '15–20 reps', reps: '2x' },
-  { name: 'Active couch stretch', detail: '1 min per side', reps: '1x' },
-  { name: 'Elephant walk', detail: '15 reps per side', reps: '1x' },
-  { name: 'Piriformis push-ups', detail: '20 reps per side', reps: '1x' },
-  { name: 'Pancake standing pulse', detail: '20 reps', reps: '1x' },
-  { name: 'Power raises', detail: '10–12 reps per side', reps: '1x' },
-  { name: 'ATG incline press', detail: '10–12 reps', reps: '1x' },
-  { name: 'Pull up', detail: 'To failure', reps: '1x' },
-  { name: 'Wrist ulnar/radial flexion', detail: '10–12 reps', reps: '1x' },
+  { name: 'Slant or Hackenschmidt squat', detail: '15–20 reps', reps: '3x', learnMoreUrl: 'https://www.youtube.com/results?search_query=Hackenschmidt+squat' },
+  { name: 'Nordic hamstring lowers', detail: '5 reps', reps: '2x', learnMoreUrl: 'https://www.youtube.com/results?search_query=nordic+hamstring+exercise' },
+  { name: 'L-sit', detail: '5 reps', reps: '2x', learnMoreUrl: 'https://www.youtube.com/results?search_query=L-sit+exercise' },
+  { name: 'Hip flexor lift', detail: '15–20 reps', reps: '2x', learnMoreUrl: 'https://www.youtube.com/results?search_query=hip+flexor+lift+exercise' },
+  { name: 'Active couch stretch', detail: '1 min per side', reps: '1x', learnMoreUrl: 'https://www.youtube.com/results?search_query=active+couch+stretch' },
+  { name: 'Elephant walk', detail: '15 reps per side', reps: '1x', learnMoreUrl: 'https://www.youtube.com/results?search_query=elephant+walk+exercise' },
+  { name: 'Piriformis push-ups', detail: '20 reps per side', reps: '1x', learnMoreUrl: 'https://www.youtube.com/results?search_query=piriformis+push+up+exercise' },
+  { name: 'Pancake standing pulse', detail: '20 reps', reps: '1x', learnMoreUrl: 'https://www.youtube.com/results?search_query=pancake+stretch+standing+pulse' },
+  { name: 'Power raises', detail: '10–12 reps per side', reps: '1x', learnMoreUrl: 'https://www.youtube.com/results?search_query=power+raises+shoulder+exercise' },
+  { name: 'ATG incline press', detail: '10–12 reps', reps: '1x', learnMoreUrl: 'https://www.youtube.com/results?search_query=ATG+incline+press' },
+  { name: 'Pull up', detail: 'To failure', reps: '1x', learnMoreUrl: 'https://www.youtube.com/results?search_query=pull+up+exercise' },
+  { name: 'Wrist ulnar/radial flexion', detail: '10–12 reps', reps: '1x', learnMoreUrl: 'https://www.youtube.com/results?search_query=wrist+ulnar+radial+flexion+exercise' },
+  { name: 'Dead hang or farmer\'s carry', detail: 'Grip strength: 20–40 sec hang, or 30 sec carry per hand. Longevity marker.', reps: '2x', learnMoreUrl: 'https://www.youtube.com/results?search_query=dead+hang+farmer+carry+exercise' },
 ];
 
 // ── Day C (Friday) ───────────────────────────────────────────────────────────
 export const DAY_C_EXERCISES = [
-  { name: 'Seated calf raise', detail: '12–15 reps', reps: '2x' },
-  { name: 'G-O-A-T-A Lunge', detail: '12 reps per side', reps: '3x' },
-  { name: 'Hamstring curl', detail: '10–12 reps', reps: '2x' },
-  { name: 'Back extension', detail: '10–12 reps', reps: '1x' },
-  { name: 'Single leg with band', detail: null, reps: '2x' },
-  { name: 'Active couch stretch', detail: '1 min per side', reps: '1x' },
-  { name: 'Elephant walk', detail: '15 reps per side', reps: '1x' },
-  { name: 'Piriformis push-ups', detail: '20 reps per side', reps: '1x' },
-  { name: 'Pancake standing pulse', detail: '20 reps', reps: '1x' },
-  { name: 'QL extensions', detail: '10–12 reps per side', reps: '1x' },
-  { name: 'ATG row', detail: '10–12 reps per side', reps: '1x' },
-  { name: 'Neck strengthening', detail: '3 reps', reps: '1x' },
-  { name: 'Reverse curls', detail: '10–12 reps', reps: '1x' },
+  { name: 'G-O-A-T-A Lunge', detail: '12 reps per side', reps: '3x', learnMoreUrl: 'https://www.youtube.com/results?search_query=GOATA+lunge+exercise' },
+  { name: 'Hamstring curl', detail: '10–12 reps', reps: '2x', learnMoreUrl: 'https://www.youtube.com/results?search_query=hamstring+curl+exercise' },
+  { name: 'Back extension single leg with band', detail: '10–12 reps', reps: '2x', learnMoreUrl: 'https://www.youtube.com/results?search_query=back+extension+single+leg+with+band+exercise' },
+  { name: 'Active couch stretch', detail: '1 min per side', reps: '1x', learnMoreUrl: 'https://www.youtube.com/results?search_query=active+couch+stretch' },
+  { name: 'Elephant walk', detail: '15 reps per side', reps: '1x', learnMoreUrl: 'https://www.youtube.com/results?search_query=elephant+walk+exercise' },
+  { name: 'Piriformis push-ups', detail: '20 reps per side', reps: '1x', learnMoreUrl: 'https://www.youtube.com/results?search_query=piriformis+push+up+exercise' },
+  { name: 'Pancake standing pulse', detail: '20 reps', reps: '1x', learnMoreUrl: 'https://www.youtube.com/results?search_query=pancake+stretch+standing+pulse' },
+  { name: 'QL extensions', detail: '10–12 reps per side', reps: '1x', learnMoreUrl: 'https://www.youtube.com/results?search_query=quadratus+lumborum+QL+extension' },
+  { name: 'ATG row', detail: '10–12 reps per side', reps: '1x', learnMoreUrl: 'https://www.youtube.com/results?search_query=ATG+row+exercise' },
+  { name: 'Neck strengthening', detail: '3 reps', reps: '1x', learnMoreUrl: 'https://www.youtube.com/results?search_query=neck+strengthening+exercise' },
+  { name: 'Reverse curls', detail: '10–12 reps', reps: '1x', learnMoreUrl: 'https://www.youtube.com/results?search_query=reverse+curl+exercise' },
+  { name: 'Dead hang or farmer\'s carry', detail: 'Grip strength: 20–40 sec hang, or 30 sec carry per hand. Longevity marker.', reps: '2x', learnMoreUrl: 'https://www.youtube.com/results?search_query=dead+hang+farmer+carry+exercise' },
 ];
 
 // ── Longevity extras (optional, outside morning routine) ─────────────────────
