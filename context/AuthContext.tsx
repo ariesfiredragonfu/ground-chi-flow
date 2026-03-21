@@ -27,7 +27,7 @@ const GUEST_USER = { uid: 'guest', email: 'guest@local' } as User;
 
 const GUEST_STORAGE_KEY = 'groundchiflow_guest';
 
-/** Admin email — bypasses subscription verification. See docs/ADMIN_CREDENTIALS.md */
+/** Admin email — bypasses subscription verification. See docs/ACCESS_GUIDE.md */
 export const ADMIN_EMAIL = 'admin@groundchiflow.com';
 
 interface AuthContextType {
