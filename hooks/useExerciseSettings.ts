@@ -7,13 +7,18 @@
  *
  * Batch C: PT handoff is copied to `users/{uid}/exerciseSettings` so the program survives
  * independently of `ptHandoffRequests/{email}`. Optional `updateRoutineMerge` persists merges.
+ * Batch E: `updateRoutineMerge` awaits Firestore and throws on failure (UI can Alert).
  */
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db, firebaseAvailable } from '../lib/firebase';
 import { useAuth } from '../context/AuthContext';
-import { mergeRoutineMergePatch, type PtRoutineMerge } from '../lib/buildPtRehabSection';
+import {
+  mergeRoutineMergePatch,
+  type PtRoutineMerge,
+  type PtProgramPayload,
+} from '../lib/buildPtRehabSection';
 
 export type ExerciseLevel = 'beginner' | 'intermediate' | 'advanced';
 export type ExerciseSource = 'pt' | 'signup' | 'user' | 'guest';
@@ -22,19 +27,7 @@ export interface ExerciseSettings {
   level: ExerciseLevel;
   source: ExerciseSource;
   updatedAt: string | null;
-  ptProgram?: {
-    protocolKey?: string;
-    protocolSeverity?: string;
-    phaseKeys?: string[];
-    customExercises?: Array<{ name: string; dosage?: string; rom_limit?: string }>;
-    customNutritionNotes?: string;
-    redFlagWatchlist?: string[];
-    ptAuthor?: string;
-    routineMerge?: {
-      disabledSections?: string[];
-      conflictTagsActive?: string[];
-    };
-  } | null;
+  ptProgram?: PtProgramPayload | null;
 }
 
 const AS_EXERCISE_SETTINGS_KEY = 'exercise_settings_v1';
@@ -52,6 +45,7 @@ function normalizeEmail(email: string | undefined | null): string | null {
 
 /** Raw Firestore shape on `ptHandoffRequests/{email}` (subset). */
 type PtHandoffDoc = {
+  schema_version?: string;
   level?: ExerciseLevel;
   protocolKey?: string;
   protocolSeverity?: string;
@@ -64,9 +58,11 @@ type PtHandoffDoc = {
     disabledSections?: string[];
     conflictTagsActive?: string[];
   };
+  programSnapshot?: PtProgramPayload['programSnapshot'];
+  activePhase?: PtProgramPayload['activePhase'];
 };
 
-function handoffDocToPtProgram(ptData: PtHandoffDoc): NonNullable<ExerciseSettings['ptProgram']> {
+function handoffDocToPtProgram(ptData: PtHandoffDoc): PtProgramPayload {
   return {
     protocolKey: ptData.protocolKey,
     protocolSeverity: ptData.protocolSeverity,
@@ -76,6 +72,9 @@ function handoffDocToPtProgram(ptData: PtHandoffDoc): NonNullable<ExerciseSettin
     redFlagWatchlist: ptData.redFlagWatchlist,
     ptAuthor: ptData.ptAuthor,
     routineMerge: ptData.routineMerge,
+    handoffSchemaVersion: typeof ptData.schema_version === 'string' ? ptData.schema_version : undefined,
+    programSnapshot: ptData.programSnapshot,
+    activePhase: ptData.activePhase,
   };
 }
 
@@ -94,6 +93,11 @@ export function useExerciseSettings() {
     updatedAt: null,
     ptProgram: null,
   });
+
+  const settingsRef = useRef(settings);
+  useEffect(() => {
+    settingsRef.current = settings;
+  }, [settings]);
 
   useEffect(() => {
     let cancelled = false;
@@ -281,37 +285,37 @@ export function useExerciseSettings() {
     [user]
   );
 
-  /** Batch C: merge `routineMerge` and persist to `users/{uid}/exerciseSettings` (PT clients only). */
+  /** Merge `routineMerge` and persist. Throws if sign-in or Firestore write fails (Batch E). */
   const updateRoutineMerge = useCallback(
     async (patch: Partial<PtRoutineMerge>) => {
-      if (!user || user.uid === 'guest' || !db || !firebaseAvailable) return;
-
-      setSettings((prev) => {
-        if (prev.source !== 'pt' || !prev.ptProgram) return prev;
-        const nextProgram = mergeRoutineMergePatch(prev.ptProgram, patch);
-        const uid = user.uid;
-        Promise.resolve().then(async () => {
-          try {
-            await setDoc(
-              doc(db!, 'users', uid, 'exerciseSettings'),
-              {
-                level: prev.level,
-                source: 'pt',
-                ptProgram: nextProgram,
-                updatedAt: serverTimestamp(),
-              },
-              { merge: true }
-            );
-          } catch (e) {
-            console.warn('updateRoutineMerge persist failed', e);
-          }
-        });
-        return {
-          ...prev,
+      if (!user || user.uid === 'guest' || !db || !firebaseAvailable) {
+        throw new Error('Sign in required to save routine visibility.');
+      }
+      const prev = settingsRef.current;
+      if (prev.source !== 'pt' || !prev.ptProgram) {
+        throw new Error('No PT program loaded.');
+      }
+      const nextProgram = mergeRoutineMergePatch(prev.ptProgram, patch);
+      await setDoc(
+        doc(db!, 'users', user.uid, 'exerciseSettings'),
+        {
+          level: prev.level,
+          source: 'pt',
           ptProgram: nextProgram,
-          updatedAt: new Date().toISOString(),
-        };
+          updatedAt: serverTimestamp(),
+        },
+        { merge: true }
+      );
+      setSettings({
+        ...prev,
+        ptProgram: nextProgram,
+        updatedAt: new Date().toISOString(),
       });
+      settingsRef.current = {
+        ...prev,
+        ptProgram: nextProgram,
+        updatedAt: new Date().toISOString(),
+      };
     },
     [user]
   );

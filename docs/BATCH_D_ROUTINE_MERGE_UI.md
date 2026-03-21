@@ -26,8 +26,6 @@ git tag -a checkpoint-pt-merge-batch-d -m "GCF Batch D: PT routine merge UI on R
 git push origin checkpoint-pt-merge-batch-d
 ```
 
-## Next (Batch E — ideas)
+## Next
 
-- Handoff schema: `programSnapshot`, `activePhase` (ReForge + validation).
-- Firestore rules audit for `exerciseSettings`.
-- Loading / error toast on `updateRoutineMerge` failure.
+- **Batch E:** [BATCH_E_HANDOFF_SCHEMA_AND_RULES.md](BATCH_E_HANDOFF_SCHEMA_AND_RULES.md) — schema 1.2.0, `validatePtHandoffRequest`, rules template, merge save UX.

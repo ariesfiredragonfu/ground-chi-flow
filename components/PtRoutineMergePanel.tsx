@@ -3,7 +3,7 @@
  * Persists via useExerciseSettings.updateRoutineMerge → Firestore.
  */
 import React, { useCallback, useMemo, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../constants/Colors';
 import type { PtProgramPayload, PtRoutineMerge } from '../lib/buildPtRehabSection';
@@ -38,6 +38,22 @@ type Props = {
 
 export function PtRoutineMergePanel({ ptProgram, updateRoutineMerge }: Props) {
   const [open, setOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const runSave = useCallback(
+    async (fn: () => Promise<void>) => {
+      setSaving(true);
+      try {
+        await fn();
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : 'Could not save. Check connection and try again.';
+        Alert.alert('Save failed', msg);
+      } finally {
+        setSaving(false);
+      }
+    },
+    []
+  );
 
   const rm = ptProgram.routineMerge ?? {};
   const disabled = useMemo(() => new Set(rm.disabledSections ?? []), [rm.disabledSections]);
@@ -47,23 +63,23 @@ export function PtRoutineMergePanel({ ptProgram, updateRoutineMerge }: Props) {
   );
 
   const toggleTag = useCallback(
-    async (tagId: string) => {
+    (tagId: string) => {
       const next = new Set(tags);
       if (next.has(tagId)) next.delete(tagId);
       else next.add(tagId);
-      await updateRoutineMerge({ conflictTagsActive: [...next] });
+      void runSave(() => updateRoutineMerge({ conflictTagsActive: [...next] }));
     },
-    [tags, updateRoutineMerge]
+    [tags, updateRoutineMerge, runSave]
   );
 
   const toggleSectionHidden = useCallback(
-    async (sectionId: string) => {
+    (sectionId: string) => {
       const next = new Set(disabled);
       if (next.has(sectionId)) next.delete(sectionId);
       else next.add(sectionId);
-      await updateRoutineMerge({ disabledSections: [...next] });
+      void runSave(() => updateRoutineMerge({ disabledSections: [...next] }));
     },
-    [disabled, updateRoutineMerge]
+    [disabled, updateRoutineMerge, runSave]
   );
 
   return (
@@ -71,6 +87,7 @@ export function PtRoutineMergePanel({ ptProgram, updateRoutineMerge }: Props) {
       <TouchableOpacity
         style={styles.header}
         onPress={() => setOpen((v) => !v)}
+        disabled={saving}
         accessibilityRole="button"
         accessibilityLabel={open ? 'Collapse PT routine visibility' : 'Expand PT routine visibility'}
       >
@@ -79,7 +96,11 @@ export function PtRoutineMergePanel({ ptProgram, updateRoutineMerge }: Props) {
           <Text style={styles.headerTitle}>Routine visibility (PT)</Text>
           <Text style={styles.headerSub}>Hide GCF blocks that clash with your rehab — saved to your account</Text>
         </View>
-        <Ionicons name={open ? 'chevron-up' : 'chevron-down'} size={22} color={Colors.textSecondary} />
+        {saving ? (
+          <ActivityIndicator size="small" color={Colors.hrv} />
+        ) : (
+          <Ionicons name={open ? 'chevron-up' : 'chevron-down'} size={22} color={Colors.textSecondary} />
+        )}
       </TouchableOpacity>
 
       {open ? (
@@ -91,6 +112,7 @@ export function PtRoutineMergePanel({ ptProgram, updateRoutineMerge }: Props) {
               <TouchableOpacity
                 key={opt.id}
                 style={[styles.row, on && styles.rowOn]}
+                disabled={saving}
                 onPress={() => toggleTag(opt.id)}
               >
                 <View style={[styles.check, on && styles.checkOn]}>
@@ -116,6 +138,7 @@ export function PtRoutineMergePanel({ ptProgram, updateRoutineMerge }: Props) {
               <TouchableOpacity
                 key={sid}
                 style={[styles.row, styles.rowCompact, on && styles.rowOn]}
+                disabled={saving}
                 onPress={() => toggleSectionHidden(sid)}
               >
                 <View style={[styles.check, on && styles.checkOn]}>

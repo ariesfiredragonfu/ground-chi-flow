@@ -10,6 +10,20 @@ export type PtRoutineMerge = {
   conflictTagsActive?: string[];
 };
 
+/** Batch E: frozen excerpt from ReForge export (schema ≥ 1.2.0). */
+export type PtProgramSnapshot = {
+  protocolKey?: string;
+  phaseKeys?: string[];
+  planSummaryExcerpt?: string;
+};
+
+/** Batch E: which phase the patient is in (ReForge → GCF). */
+export type PtActivePhase = {
+  key?: string;
+  label?: string;
+  orderIndex?: number;
+};
+
 /** Subset of handoff / user settings shape used for the PT rehab section. */
 export type PtProgramPayload = {
   protocolKey?: string;
@@ -20,6 +34,10 @@ export type PtProgramPayload = {
   redFlagWatchlist?: string[];
   ptAuthor?: string;
   routineMerge?: PtRoutineMerge;
+  /** ReForge `pt_handoff_request.schema_version` echoed for debugging (optional). */
+  handoffSchemaVersion?: string;
+  programSnapshot?: PtProgramSnapshot;
+  activePhase?: PtActivePhase;
 };
 
 export type PtRehabRow = {
@@ -59,6 +77,8 @@ export function shouldShowPtRehabSection(
   if (nonEmptyString(ptProgram.customNutritionNotes)) return true;
   if (Array.isArray(ptProgram.redFlagWatchlist) && ptProgram.redFlagWatchlist.length > 0) return true;
   if (nonEmptyString(ptProgram.ptAuthor)) return true;
+  if (nonEmptyString(ptProgram.programSnapshot?.planSummaryExcerpt)) return true;
+  if (nonEmptyString(ptProgram.activePhase?.key) || nonEmptyString(ptProgram.activePhase?.label)) return true;
   return false;
 }
 
@@ -71,6 +91,15 @@ export function buildPtRehabContextLines(ptProgram: PtProgramPayload): string[] 
   }
   if (Array.isArray(ptProgram.phaseKeys) && ptProgram.phaseKeys.length > 0) {
     lines.push(`Phases: ${ptProgram.phaseKeys.join(', ')}`);
+  }
+  if (nonEmptyString(ptProgram.activePhase?.label)) {
+    lines.push(`Active phase: ${ptProgram.activePhase!.label}`);
+  } else if (nonEmptyString(ptProgram.activePhase?.key)) {
+    lines.push(`Active phase: ${ptProgram.activePhase!.key}`);
+  }
+  if (nonEmptyString(ptProgram.programSnapshot?.planSummaryExcerpt)) {
+    const ex = ptProgram.programSnapshot!.planSummaryExcerpt!.trim();
+    lines.push(`Plan snapshot: ${ex.length > 220 ? `${ex.slice(0, 217)}…` : ex}`);
   }
   if (nonEmptyString(ptProgram.ptAuthor)) {
     lines.push(`Prescribed by: ${ptProgram.ptAuthor}`);
@@ -145,6 +174,14 @@ export function runPtRehabSectionSelfTest(): string[] {
   assert(!!m1.routineMerge?.disabledSections?.includes('meditation'), 'patch adds sections');
   const m2 = mergeRoutineMergePatch({ protocolKey: 'x' }, { conflictTagsActive: ['knee'] });
   assert(m2.routineMerge?.conflictTagsActive?.[0] === 'knee', 'patch on empty merge');
+
+  const snapLines = buildPtRehabContextLines({
+    protocolKey: 'acl',
+    activePhase: { key: 'acute', label: 'Acute' },
+    programSnapshot: { planSummaryExcerpt: 'Short summary for home program.' },
+  });
+  assert(snapLines.some((l) => l.startsWith('Active phase:')), 'active phase line');
+  assert(snapLines.some((l) => l.startsWith('Plan snapshot:')), 'snapshot line');
 
   return errors;
 }

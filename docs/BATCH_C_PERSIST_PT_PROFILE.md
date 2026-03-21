@@ -35,5 +35,5 @@ git push origin checkpoint-pt-merge-batch-c
 
 ## Next
 
-- **Batch D (shipped):** [BATCH_D_ROUTINE_MERGE_UI.md](BATCH_D_ROUTINE_MERGE_UI.md) — Routines screen UI + `updateRoutineMerge`.
-- **Batch E (ideas):** Handoff schema (`programSnapshot`, `activePhase`), `validate_handoff_shape`, Firestore rules review.
+- **Batch D:** [BATCH_D_ROUTINE_MERGE_UI.md](BATCH_D_ROUTINE_MERGE_UI.md) — Routines UI + `updateRoutineMerge`.
+- **Batch E:** [BATCH_E_HANDOFF_SCHEMA_AND_RULES.md](BATCH_E_HANDOFF_SCHEMA_AND_RULES.md) — schema 1.2.0, validation, rules template, save UX.
