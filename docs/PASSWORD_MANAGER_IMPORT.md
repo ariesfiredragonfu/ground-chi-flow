@@ -1,8 +1,8 @@
 # Import into a password manager
 
-The assistant **cannot** log into Bitwarden, 1Password, or iCloud Keychain for you. Use the CSV on your Desktop:
+The assistant **cannot** log into Bitwarden, 1Password, or iCloud Keychain for you.
 
-**`~/Desktop/admin-howell-forge/password-manager-import-template.csv`**
+Use the CSV template (same idea as `~/Desktop/admin-howell-forge/password-manager-import-template.csv` if you keep that folder): **Chrome-style columns** `name,url,username,password` — import, then fill passwords after you set them in Firebase / other services.
 
 ## Bitwarden (web)
 
