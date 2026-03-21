@@ -24,6 +24,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Audio } from 'expo-av';
 import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 import { Colors } from '../../constants/Colors';
+import { EXERCISE_POPPING_REGRESSION_NOTE } from '../../constants/movementQualityNotes';
 import { useRoutineProgress, useRoutineDay } from '../../hooks/useHealthData';
 import { useExerciseSettings } from '../../hooks/useExerciseSettings';
 import {
@@ -125,8 +126,20 @@ type ExerciseItemProps = {
   };
   onTimerComplete?: (exerciseName: string) => void;
   autoEasier?: boolean;
+  /** Show movement-quality line under the exercise (default: all routine exercises). */
+  showPoppingNote?: boolean;
 };
-function ExerciseItem({ name, detail, reps, videoUrl, learnMoreUrl, regression, onTimerComplete, autoEasier = false }: ExerciseItemProps) {
+function ExerciseItem({
+  name,
+  detail,
+  reps,
+  videoUrl,
+  learnMoreUrl,
+  regression,
+  onTimerComplete,
+  autoEasier = false,
+  showPoppingNote = true,
+}: ExerciseItemProps) {
   const [useRegression, setUseRegression] = useState(autoEasier && !!regression);
   const [timerRunning, setTimerRunning] = useState(false);
   const [timeLeft, setTimeLeft] = useState(0);
@@ -193,50 +206,55 @@ function ExerciseItem({ name, detail, reps, videoUrl, learnMoreUrl, regression, 
   };
 
   return (
-    <View style={styles.exerciseRow}>
-      <View style={styles.exerciseMain}>
-        <Text style={styles.exerciseName}>{activeName}</Text>
-        {(activeDetail || activeReps) && (
-          <Text style={styles.exerciseDetail}>
-            {[activeDetail, activeReps].filter(Boolean).join(' · ')}
-          </Text>
-        )}
-      </View>
-
-      <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
-        {inferredSeconds ? (
-          <TouchableOpacity
-            style={styles.exerciseLinkBtnOutline}
-            onPress={timerRunning ? stopExerciseTimer : startExerciseTimer}
-          >
-            <Ionicons name={timerRunning ? 'stop-outline' : 'timer-outline'} size={16} color={Colors.primary} />
-            <Text style={[styles.exerciseLinkText, { color: Colors.primary }]}>
-              {timerRunning ? formatTime(timeLeft) : `Timer ${formatTime(inferredSeconds)}`}
+    <View style={styles.exerciseItemBlock}>
+      <View style={styles.exerciseRow}>
+        <View style={styles.exerciseMain}>
+          <Text style={styles.exerciseName}>{activeName}</Text>
+          {(activeDetail || activeReps) && (
+            <Text style={styles.exerciseDetail}>
+              {[activeDetail, activeReps].filter(Boolean).join(' · ')}
             </Text>
-          </TouchableOpacity>
-        ) : null}
+          )}
+        </View>
 
-        {linkUrl ? (
-          <TouchableOpacity
-            style={styles.exerciseLinkBtn}
-            onPress={() => linkUrl && Linking.openURL(linkUrl)}
-          >
-            <Ionicons name={activeVideoUrl ? 'play-circle-outline' : 'open-outline'} size={16} color={Colors.primary} />
-            <Text style={styles.exerciseLinkText}>{linkLabel}</Text>
-          </TouchableOpacity>
-        ) : null}
+        <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+          {inferredSeconds ? (
+            <TouchableOpacity
+              style={styles.exerciseLinkBtnOutline}
+              onPress={timerRunning ? stopExerciseTimer : startExerciseTimer}
+            >
+              <Ionicons name={timerRunning ? 'stop-outline' : 'timer-outline'} size={16} color={Colors.primary} />
+              <Text style={[styles.exerciseLinkText, { color: Colors.primary }]}>
+                {timerRunning ? formatTime(timeLeft) : `Timer ${formatTime(inferredSeconds)}`}
+              </Text>
+            </TouchableOpacity>
+          ) : null}
 
-        {regression ? (
-          <TouchableOpacity
-            style={styles.exerciseLinkBtnOutline}
-            onPress={() => setUseRegression((v) => !v)}
-          >
-            <Text style={[styles.exerciseLinkText, { color: Colors.primary }]}>
-              {useRegression ? (autoEasier ? 'Beginner option active' : 'Full option') : 'Easier option'}
-            </Text>
-          </TouchableOpacity>
-        ) : null}
+          {linkUrl ? (
+            <TouchableOpacity
+              style={styles.exerciseLinkBtn}
+              onPress={() => linkUrl && Linking.openURL(linkUrl)}
+            >
+              <Ionicons name={activeVideoUrl ? 'play-circle-outline' : 'open-outline'} size={16} color={Colors.primary} />
+              <Text style={styles.exerciseLinkText}>{linkLabel}</Text>
+            </TouchableOpacity>
+          ) : null}
+
+          {regression ? (
+            <TouchableOpacity
+              style={styles.exerciseLinkBtnOutline}
+              onPress={() => setUseRegression((v) => !v)}
+            >
+              <Text style={[styles.exerciseLinkText, { color: Colors.primary }]}>
+                {useRegression ? (autoEasier ? 'Beginner option active' : 'Full option') : 'Easier option'}
+              </Text>
+            </TouchableOpacity>
+          ) : null}
+        </View>
       </View>
+      {showPoppingNote ? (
+        <Text style={styles.exercisePoppingNote}>{EXERCISE_POPPING_REGRESSION_NOTE}</Text>
+      ) : null}
     </View>
   );
 }
@@ -1136,11 +1154,12 @@ const styles = StyleSheet.create({
   attributionHint: { color: Colors.textMuted, fontSize: 11, fontStyle: 'italic', marginBottom: 8 },
   subsectionLabel: { color: Colors.textMuted, fontSize: 12, fontWeight: '600', marginBottom: 8 },
   nsFasciaHint: { color: Colors.textSecondary, fontSize: 13, marginBottom: 12, fontStyle: 'italic' },
+  exerciseItemBlock: { marginBottom: 10 },
   exerciseRow: {
     backgroundColor: Colors.bgCard,
     borderRadius: 8,
     padding: 10,
-    marginBottom: 6,
+    marginBottom: 0,
     borderWidth: 1,
     borderColor: Colors.border,
     flexDirection: 'row',
@@ -1150,6 +1169,15 @@ const styles = StyleSheet.create({
   exerciseMain: { flex: 1 },
   exerciseName: { fontSize: 14, fontWeight: '600', color: Colors.textPrimary },
   exerciseDetail: { fontSize: 12, color: Colors.textSecondary, marginTop: 2 },
+  exercisePoppingNote: {
+    fontSize: 10,
+    lineHeight: 14,
+    color: Colors.textMuted,
+    fontStyle: 'italic',
+    marginTop: 6,
+    paddingHorizontal: 4,
+    paddingBottom: 2,
+  },
   exerciseLinkBtn: {
     flexDirection: 'row',
     alignItems: 'center',
