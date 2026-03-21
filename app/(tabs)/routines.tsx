@@ -33,6 +33,7 @@ import {
   buildPtRehabExtraNotes,
 } from '../../lib/buildPtRehabSection';
 import { getHiddenRoutineSectionIds, isRoutineSectionVisible } from '../../lib/mergeRoutineWithPt';
+import { PtRoutineMergePanel } from '../../components/PtRoutineMergePanel';
 import {
   MEDITATIONS,
   BREATHWORK,
@@ -247,7 +248,15 @@ export default function RoutinesScreen() {
   const mainBlockToday = isMainBlockDay(routineDay);
   const mainDay = getMainExerciseDay(routineDay);
   const mainExercises = getMainExercises(mainDay);
-  const { loading: loadingExerciseSettings, needsSelection, level, source, setLevel, settings } = useExerciseSettings();
+  const {
+    loading: loadingExerciseSettings,
+    needsSelection,
+    level,
+    source,
+    setLevel,
+    settings,
+    updateRoutineMerge,
+  } = useExerciseSettings();
 
   const [activeBreathworkDay, setActiveBreathworkDay] = useState<number | null>(null);
   const [timeLeft, setTimeLeft] = useState(0);
@@ -557,6 +566,10 @@ export default function RoutinesScreen() {
               available when assigned.
             </Text>
           </View>
+        ) : null}
+
+        {source === 'pt' && ptProgram ? (
+          <PtRoutineMergePanel ptProgram={ptProgram} updateRoutineMerge={updateRoutineMerge} />
         ) : null}
 
         {/* 1. Meditation */}

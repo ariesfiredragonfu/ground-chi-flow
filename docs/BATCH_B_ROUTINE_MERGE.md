@@ -35,6 +35,7 @@ git tag -a checkpoint-pt-merge-batch-b -m "GCF Batch B: routine merge + routineM
 git push origin checkpoint-pt-merge-batch-b
 ```
 
-## Next (Batch C)
+## Next
 
-Persist PT program + `routineMerge` on `users/{uid}/exerciseSettings` and optional `updateRoutineMerge` — see [BATCH_C_PERSIST_PT_PROFILE.md](BATCH_C_PERSIST_PT_PROFILE.md).
+- **Batch C:** [BATCH_C_PERSIST_PT_PROFILE.md](BATCH_C_PERSIST_PT_PROFILE.md) — persist PT program + `updateRoutineMerge`.
+- **Batch D:** [BATCH_D_ROUTINE_MERGE_UI.md](BATCH_D_ROUTINE_MERGE_UI.md) — Routines UI for merge rules.

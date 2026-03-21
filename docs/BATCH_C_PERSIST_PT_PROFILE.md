@@ -33,8 +33,7 @@ git tag -a checkpoint-pt-merge-batch-c -m "GCF Batch C: persist PT program + upd
 git push origin checkpoint-pt-merge-batch-c
 ```
 
-## Next (Batch D — ideas)
+## Next
 
-- UI to edit `routineMerge` (sections / conflict tags) for PT clients.
-- Handoff schema bumps: `programSnapshot`, `activePhase` (ReForge + `validate_handoff_shape`).
-- Firestore security rules review for `exerciseSettings` vs `ptHandoffRequests`.
+- **Batch D (shipped):** [BATCH_D_ROUTINE_MERGE_UI.md](BATCH_D_ROUTINE_MERGE_UI.md) — Routines screen UI + `updateRoutineMerge`.
+- **Batch E (ideas):** Handoff schema (`programSnapshot`, `activePhase`), `validate_handoff_shape`, Firestore rules review.
