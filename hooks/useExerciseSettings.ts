@@ -4,12 +4,16 @@
  * Rules:
  * - No component/screen may call Firestore directly. This hook owns all Firestore IO.
  * - Firebase unavailable → fall back to AsyncStorage (local-only).
+ *
+ * Batch C: PT handoff is copied to `users/{uid}/exerciseSettings` so the program survives
+ * independently of `ptHandoffRequests/{email}`. Optional `updateRoutineMerge` persists merges.
  */
 import { useState, useEffect, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db, firebaseAvailable } from '../lib/firebase';
 import { useAuth } from '../context/AuthContext';
+import { mergeRoutineMergePatch, type PtRoutineMerge } from '../lib/buildPtRehabSection';
 
 export type ExerciseLevel = 'beginner' | 'intermediate' | 'advanced';
 export type ExerciseSource = 'pt' | 'signup' | 'user' | 'guest';
@@ -44,6 +48,35 @@ function normalizeEmail(email: string | undefined | null): string | null {
   const e = String(email).trim().toLowerCase();
   if (!e || !e.includes('@')) return null;
   return e;
+}
+
+/** Raw Firestore shape on `ptHandoffRequests/{email}` (subset). */
+type PtHandoffDoc = {
+  level?: ExerciseLevel;
+  protocolKey?: string;
+  protocolSeverity?: string;
+  phaseKeys?: string[];
+  customExercises?: Array<{ name: string; dosage?: string; rom_limit?: string }>;
+  customNutritionNotes?: string;
+  redFlagWatchlist?: string[];
+  ptAuthor?: string;
+  routineMerge?: {
+    disabledSections?: string[];
+    conflictTagsActive?: string[];
+  };
+};
+
+function handoffDocToPtProgram(ptData: PtHandoffDoc): NonNullable<ExerciseSettings['ptProgram']> {
+  return {
+    protocolKey: ptData.protocolKey,
+    protocolSeverity: ptData.protocolSeverity,
+    phaseKeys: ptData.phaseKeys,
+    customExercises: ptData.customExercises,
+    customNutritionNotes: ptData.customNutritionNotes,
+    redFlagWatchlist: ptData.redFlagWatchlist,
+    ptAuthor: ptData.ptAuthor,
+    routineMerge: ptData.routineMerge,
+  };
 }
 
 // Use Firestore only when: real user (not guest) + Firebase available
@@ -101,11 +134,53 @@ export function useExerciseSettings() {
         if (snap.exists()) {
           const data = snap.data() as Partial<ExerciseSettings>;
           const level = isValidLevel(data.level) ? data.level : 'beginner';
+          let source = (data.source as ExerciseSource) ?? 'user';
+          let ptProgram = data.ptProgram ?? null;
+          const updatedAtStr =
+            typeof data.updatedAt === 'string' ? data.updatedAt : null;
+
+          // Batch C: user doc exists but no ptProgram yet — pull from PT handoff and persist
+          const email = normalizeEmail(user!.email);
+          if (!ptProgram && email) {
+            const ptRef = doc(db!, 'ptHandoffRequests', email);
+            const ptSnap = await getDoc(ptRef);
+            if (cancelled) return;
+            if (ptSnap.exists()) {
+              const ptData = ptSnap.data() as PtHandoffDoc;
+              const ptProgramNew = handoffDocToPtProgram(ptData);
+              const ptLevel = isValidLevel(ptData.level) ? ptData.level : level;
+              ptProgram = ptProgramNew;
+              source = 'pt';
+              setSettings({
+                level: ptLevel,
+                source,
+                updatedAt: updatedAtStr,
+                ptProgram,
+              });
+              setNeedsSelection(false);
+              try {
+                await setDoc(
+                  userSettingsRef,
+                  {
+                    level: ptLevel,
+                    source: 'pt',
+                    ptProgram,
+                    updatedAt: serverTimestamp(),
+                  },
+                  { merge: true }
+                );
+              } catch {
+                /* non-fatal */
+              }
+              return;
+            }
+          }
+
           setSettings({
             level,
-            source: (data.source as ExerciseSource) ?? 'user',
-            updatedAt: data.updatedAt ?? null,
-            ptProgram: data.ptProgram ?? null,
+            source,
+            updatedAt: updatedAtStr,
+            ptProgram,
           });
           setNeedsSelection(false);
           return;
@@ -119,38 +194,31 @@ export function useExerciseSettings() {
           if (cancelled) return;
 
           if (ptSnap.exists()) {
-            const ptData = ptSnap.data() as Partial<{
-              level: ExerciseLevel;
-              protocolKey: string;
-              protocolSeverity: string;
-              phaseKeys: string[];
-              customExercises: Array<{ name: string; dosage?: string; rom_limit?: string }>;
-              customNutritionNotes: string;
-              redFlagWatchlist: string[];
-              ptAuthor: string;
-              routineMerge: {
-                disabledSections?: string[];
-                conflictTagsActive?: string[];
-              };
-            }>;
+            const ptData = ptSnap.data() as PtHandoffDoc;
             const ptLevel = isValidLevel(ptData.level) ? ptData.level : 'beginner';
+            const ptProgram = handoffDocToPtProgram(ptData);
             setSettings({
               level: ptLevel,
               source: 'pt',
               updatedAt: null,
-              ptProgram: {
-                protocolKey: ptData.protocolKey,
-                protocolSeverity: ptData.protocolSeverity,
-                phaseKeys: ptData.phaseKeys,
-                customExercises: ptData.customExercises,
-                customNutritionNotes: ptData.customNutritionNotes,
-                redFlagWatchlist: ptData.redFlagWatchlist,
-                ptAuthor: ptData.ptAuthor,
-                routineMerge: ptData.routineMerge,
-              },
+              ptProgram,
             });
-            // PT already picked an initial level; do not force signup selection.
             setNeedsSelection(false);
+            // Batch C: persist handoff snapshot onto user profile
+            try {
+              await setDoc(
+                userSettingsRef,
+                {
+                  level: ptLevel,
+                  source: 'pt',
+                  ptProgram,
+                  updatedAt: serverTimestamp(),
+                },
+                { merge: true }
+              );
+            } catch {
+              /* non-fatal */
+            }
             return;
           }
         }
@@ -161,7 +229,12 @@ export function useExerciseSettings() {
       } catch {
         // If anything fails, keep the app usable by defaulting to beginner.
         if (cancelled) return;
-        setSettings({ level: 'beginner', source: user?.uid === 'guest' ? 'guest' : 'signup', updatedAt: null, ptProgram: null });
+        setSettings({
+          level: 'beginner',
+          source: user?.uid === 'guest' ? 'guest' : 'signup',
+          updatedAt: null,
+          ptProgram: null,
+        });
         setNeedsSelection(true);
       } finally {
         if (!cancelled) setLoading(false);
@@ -208,6 +281,48 @@ export function useExerciseSettings() {
     [user]
   );
 
-  return { loading, needsSelection, settings, level: settings.level, source: settings.source, setLevel };
-}
+  /** Batch C: merge `routineMerge` and persist to `users/{uid}/exerciseSettings` (PT clients only). */
+  const updateRoutineMerge = useCallback(
+    async (patch: Partial<PtRoutineMerge>) => {
+      if (!user || user.uid === 'guest' || !db || !firebaseAvailable) return;
 
+      setSettings((prev) => {
+        if (prev.source !== 'pt' || !prev.ptProgram) return prev;
+        const nextProgram = mergeRoutineMergePatch(prev.ptProgram, patch);
+        const uid = user.uid;
+        Promise.resolve().then(async () => {
+          try {
+            await setDoc(
+              doc(db!, 'users', uid, 'exerciseSettings'),
+              {
+                level: prev.level,
+                source: 'pt',
+                ptProgram: nextProgram,
+                updatedAt: serverTimestamp(),
+              },
+              { merge: true }
+            );
+          } catch (e) {
+            console.warn('updateRoutineMerge persist failed', e);
+          }
+        });
+        return {
+          ...prev,
+          ptProgram: nextProgram,
+          updatedAt: new Date().toISOString(),
+        };
+      });
+    },
+    [user]
+  );
+
+  return {
+    loading,
+    needsSelection,
+    settings,
+    level: settings.level,
+    source: settings.source,
+    setLevel,
+    updateRoutineMerge,
+  };
+}

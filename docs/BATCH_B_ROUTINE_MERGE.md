@@ -34,3 +34,7 @@ npx tsc --noEmit
 git tag -a checkpoint-pt-merge-batch-b -m "GCF Batch B: routine merge + routineMerge handoff"
 git push origin checkpoint-pt-merge-batch-b
 ```
+
+## Next (Batch C)
+
+Persist PT program + `routineMerge` on `users/{uid}/exerciseSettings` and optional `updateRoutineMerge` — see [BATCH_C_PERSIST_PT_PROFILE.md](BATCH_C_PERSIST_PT_PROFILE.md).

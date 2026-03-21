@@ -28,6 +28,20 @@ export type PtRehabRow = {
   reps: string | null;
 };
 
+/** Batch C: apply a partial patch to `routineMerge` (immutable). */
+export function mergeRoutineMergePatch(
+  ptProgram: PtProgramPayload,
+  patch: Partial<PtRoutineMerge>
+): PtProgramPayload {
+  return {
+    ...ptProgram,
+    routineMerge: {
+      ...(ptProgram.routineMerge ?? {}),
+      ...patch,
+    },
+  };
+}
+
 function nonEmptyString(v: unknown): v is string {
   return typeof v === 'string' && v.trim().length > 0;
 }
@@ -124,6 +138,13 @@ export function runPtRehabSectionSelfTest(): string[] {
   });
   assert(ctx.length === 3, 'three context lines');
   assert(ctx.some((l) => l.includes('acl')), 'protocol in context');
+
+  const base: PtProgramPayload = { protocolKey: 'knee', routineMerge: { conflictTagsActive: ['neck'] } };
+  const m1 = mergeRoutineMergePatch(base, { disabledSections: ['meditation'] });
+  assert(!!m1.routineMerge?.conflictTagsActive?.includes('neck'), 'patch keeps tags');
+  assert(!!m1.routineMerge?.disabledSections?.includes('meditation'), 'patch adds sections');
+  const m2 = mergeRoutineMergePatch({ protocolKey: 'x' }, { conflictTagsActive: ['knee'] });
+  assert(m2.routineMerge?.conflictTagsActive?.[0] === 'knee', 'patch on empty merge');
 
   return errors;
 }
