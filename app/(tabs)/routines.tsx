@@ -17,6 +17,8 @@ import {
   Alert,
   ActivityIndicator,
   Linking,
+  Platform,
+  useWindowDimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -63,6 +65,7 @@ import {
   MAIN_EXERCISE_REGRESSIONS,
   NERVOUS_SYSTEM_QUICK_TWITCH_BY_DAY,
 } from '../../constants/DailyRoutine';
+import type { MainExerciseRegression } from '../../constants/DailyRoutine';
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 function formatTime(secs: number): string {
@@ -117,18 +120,17 @@ type ExerciseItemProps = {
   reps: string | null;
   videoUrl?: string | null;
   learnMoreUrl?: string | null;
-  regression?: {
-    name: string;
-    detail: string | null;
-    reps: string | null;
-    videoUrl?: string | null;
-    learnMoreUrl?: string | null;
-  };
+  regression?: MainExerciseRegression | null;
   onTimerComplete?: (exerciseName: string) => void;
   autoEasier?: boolean;
   /** Show movement-quality line under the exercise (default: all routine exercises). */
   showPoppingNote?: boolean;
 };
+/** Viewport width below this: title row full width, actions wrap (avoids one-letter-per-line labels). */
+const NARROW_ROUTINE_WIDTH = 560;
+
+type LsitTier = 'easier' | 'middle' | 'full';
+
 function ExerciseItem({
   name,
   detail,
@@ -140,15 +142,25 @@ function ExerciseItem({
   autoEasier = false,
   showPoppingNote = true,
 }: ExerciseItemProps) {
-  const [useRegression, setUseRegression] = useState(autoEasier && !!regression);
+  const { width: windowWidth } = useWindowDimensions();
+  const breakTitleRow = windowWidth < NARROW_ROUTINE_WIDTH;
+  const hasLadder = !!(regression?.intermediateStep);
+  const [tier, setTier] = useState<LsitTier>(() => (autoEasier ? 'easier' : 'full'));
+  const [useRegression, setUseRegression] = useState(
+    () => !!(regression && !regression.intermediateStep && autoEasier)
+  );
   const [timerRunning, setTimerRunning] = useState(false);
   const [timeLeft, setTimeLeft] = useState(0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const keepAwakeTagRef = useRef(`exercise-timer-${name.replace(/\s+/g, '-').toLowerCase()}`);
 
   useEffect(() => {
-    setUseRegression(autoEasier && !!regression);
-  }, [name, regression?.name, autoEasier]);
+    if (hasLadder) {
+      setTier(autoEasier ? 'easier' : 'full');
+    } else {
+      setUseRegression(autoEasier && !!regression);
+    }
+  }, [name, regression?.name, regression?.intermediateStep?.name, autoEasier, hasLadder]);
 
   useEffect(() => {
     return () => {
@@ -157,11 +169,41 @@ function ExerciseItem({
     };
   }, []);
 
-  const activeVideoUrl = useRegression && regression?.videoUrl ? regression.videoUrl : videoUrl;
-  const activeLearnMoreUrl = useRegression && regression?.learnMoreUrl ? regression.learnMoreUrl : learnMoreUrl;
-  const activeName = useRegression && regression ? regression.name : name;
-  const baseDetail = useRegression && regression ? regression.detail : detail;
-  const baseReps = useRegression && regression ? regression.reps : reps;
+  let activeVideoUrl: string | undefined;
+  let activeLearnMoreUrl: string | undefined;
+  let activeName: string;
+  let baseDetail: string | null;
+  let baseReps: string | null;
+
+  if (hasLadder && regression) {
+    if (tier === 'easier') {
+      activeName = regression.name;
+      baseDetail = regression.detail;
+      baseReps = regression.reps;
+      activeVideoUrl = regression.videoUrl ?? undefined;
+      activeLearnMoreUrl = regression.learnMoreUrl ?? undefined;
+    } else if (tier === 'middle' && regression.intermediateStep) {
+      const m = regression.intermediateStep;
+      activeName = m.name;
+      baseDetail = m.detail;
+      baseReps = m.reps;
+      activeVideoUrl = m.videoUrl ?? undefined;
+      activeLearnMoreUrl = m.learnMoreUrl ?? undefined;
+    } else {
+      activeName = name;
+      baseDetail = detail;
+      baseReps = reps;
+      activeVideoUrl = videoUrl ?? undefined;
+      activeLearnMoreUrl = learnMoreUrl ?? undefined;
+    }
+  } else {
+    activeVideoUrl = useRegression && regression?.videoUrl ? regression.videoUrl : videoUrl ?? undefined;
+    activeLearnMoreUrl = useRegression && regression?.learnMoreUrl ? regression.learnMoreUrl : learnMoreUrl ?? undefined;
+    activeName = useRegression && regression ? regression.name : name;
+    baseDetail = useRegression && regression ? regression.detail : detail;
+    baseReps = useRegression && regression ? regression.reps : reps;
+  }
+
   const activeDetail = autoEasier
     ? [baseDetail, 'Reduced range of motion; stop before pain.'].filter(Boolean).join(' · ')
     : baseDetail;
@@ -207,9 +249,16 @@ function ExerciseItem({
 
   return (
     <View style={styles.exerciseItemBlock}>
-      <View style={styles.exerciseRow}>
-        <View style={styles.exerciseMain}>
-          <Text style={styles.exerciseName}>{activeName}</Text>
+      <View style={[styles.exerciseRow, breakTitleRow && styles.exerciseRowWrap]}>
+        <View style={[styles.exerciseMain, breakTitleRow && styles.exerciseMainBreakRow]}>
+          <Text
+            style={[
+              styles.exerciseName,
+              Platform.OS === 'web' ? ({ maxWidth: '100%' } as const) : null,
+            ]}
+          >
+            {activeName}
+          </Text>
           {(activeDetail || activeReps) && (
             <Text style={styles.exerciseDetail}>
               {[activeDetail, activeReps].filter(Boolean).join(' · ')}
@@ -217,7 +266,13 @@ function ExerciseItem({
           )}
         </View>
 
-        <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+        <View
+          style={
+            breakTitleRow
+              ? styles.exerciseActionsRowWrap
+              : { flexDirection: 'row', gap: 8, alignItems: 'center' }
+          }
+        >
           {inferredSeconds ? (
             <TouchableOpacity
               style={styles.exerciseLinkBtnOutline}
@@ -240,7 +295,21 @@ function ExerciseItem({
             </TouchableOpacity>
           ) : null}
 
-          {regression ? (
+          {hasLadder && regression?.intermediateStep ? (
+            <View style={styles.tierBtnGroup}>
+              {(['easier', 'middle', 'full'] as const).map((t) => (
+                <TouchableOpacity
+                  key={t}
+                  style={[styles.tierBtn, tier === t && styles.tierBtnActive]}
+                  onPress={() => setTier(t)}
+                >
+                  <Text style={[styles.tierBtnText, tier === t && styles.tierBtnTextActive]}>
+                    {t === 'easier' ? 'Knee tuck' : t === 'middle' ? 'Assisted' : 'L-sit'}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          ) : regression ? (
             <TouchableOpacity
               style={styles.exerciseLinkBtnOutline}
               onPress={() => setUseRegression((v) => !v)}
@@ -855,7 +924,17 @@ export default function RoutinesScreen() {
             ))}
             <Text style={[styles.subsectionLabel, { marginTop: 12 }]}>Main exercises</Text>
             {mainExercises.map((ex, i) => (
-              <ExerciseItem key={`m-${i}`} name={ex.name} detail={ex.detail} reps={ex.reps} videoUrl={'videoUrl' in ex ? optionalString(ex.videoUrl) : undefined} learnMoreUrl={'learnMoreUrl' in ex ? optionalString(ex.learnMoreUrl) : undefined} regression={MAIN_EXERCISE_REGRESSIONS[ex.name]} onTimerComplete={onExerciseTimerComplete} autoEasier={level === 'beginner'} />
+              <ExerciseItem
+                key={`m-${i}`}
+                name={ex.name}
+                detail={ex.detail}
+                reps={ex.reps}
+                videoUrl={'videoUrl' in ex ? optionalString(ex.videoUrl) : undefined}
+                learnMoreUrl={'learnMoreUrl' in ex ? optionalString(ex.learnMoreUrl) : undefined}
+                regression={MAIN_EXERCISE_REGRESSIONS[ex.name]}
+                onTimerComplete={onExerciseTimerComplete}
+                autoEasier={level === 'beginner'}
+              />
             ))}
           </Section>
         ) : (
@@ -1163,11 +1242,44 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.border,
     flexDirection: 'row',
-    alignItems: 'center',
+    flexWrap: 'nowrap',
+    alignItems: 'flex-start',
     gap: 10,
   },
-  exerciseMain: { flex: 1 },
+  /** Narrow viewports: title uses full first row; actions wrap on row 2+ (no single-character columns). */
+  exerciseRowWrap: {
+    flexWrap: 'wrap',
+  },
+  exerciseMain: { flex: 1, minWidth: 0 },
+  exerciseMainBreakRow: {
+    flexBasis: '100%',
+    width: '100%',
+    minWidth: 0,
+  },
+  exerciseActionsRowWrap: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: 8,
+    flexGrow: 1,
+    minWidth: 0,
+  },
   exerciseName: { fontSize: 14, fontWeight: '600', color: Colors.textPrimary },
+  tierBtnGroup: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, alignItems: 'center' },
+  tierBtn: {
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: `${Colors.primary}44`,
+    backgroundColor: 'transparent',
+  },
+  tierBtnActive: {
+    backgroundColor: `${Colors.primary}22`,
+    borderColor: `${Colors.primary}88`,
+  },
+  tierBtnText: { fontSize: 11, fontWeight: '700', color: Colors.primary },
+  tierBtnTextActive: { fontWeight: '800' },
   exerciseDetail: { fontSize: 12, color: Colors.textSecondary, marginTop: 2 },
   exercisePoppingNote: {
     fontSize: 10,

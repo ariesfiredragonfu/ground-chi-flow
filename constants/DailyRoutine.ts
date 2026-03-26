@@ -438,7 +438,7 @@ export const FOOT_EXERCISES_DAY_5: LadderExercise[] = [
 
 // ── Day A (Monday) ───────────────────────────────────────────────────────────
 export const DAY_A_EXERCISES = [
-  { name: 'G-O-A-T-A Lunge', detail: '10–12 reps per side', reps: '3x', learnMoreUrl: 'https://www.youtube.com/results?search_query=GOATA+lunge+exercise' },
+  { name: 'GOATA Lunge', detail: '10–12 reps per side', reps: '3x', learnMoreUrl: 'https://www.youtube.com/results?search_query=GOATA+lunge+exercise' },
   { name: 'Stretch strength deadlift', detail: '15–20 reps', reps: '2x', learnMoreUrl: 'https://www.youtube.com/results?search_query=stretch+strength+deadlift' },
   { name: 'L-sit', detail: '20 sec', reps: '2x', learnMoreUrl: 'https://www.youtube.com/results?search_query=L-sit+exercise' },
   { name: 'Active couch stretch', detail: '1 min per side', reps: '1x', learnMoreUrl: 'https://www.youtube.com/results?search_query=active+couch+stretch' },
@@ -471,7 +471,7 @@ export const DAY_B_EXERCISES = [
 
 // ── Day C (Friday) ───────────────────────────────────────────────────────────
 export const DAY_C_EXERCISES = [
-  { name: 'G-O-A-T-A Lunge', detail: '12 reps per side', reps: '3x', learnMoreUrl: 'https://www.youtube.com/results?search_query=GOATA+lunge+exercise' },
+  { name: 'GOATA Lunge', detail: '12 reps per side', reps: '3x', learnMoreUrl: 'https://www.youtube.com/results?search_query=GOATA+lunge+exercise' },
   { name: 'Hamstring curl', detail: '10–12 reps', reps: '2x', learnMoreUrl: 'https://www.youtube.com/results?search_query=hamstring+curl+exercise' },
   { name: 'Back extension single leg with band', detail: '10–12 reps', reps: '2x', learnMoreUrl: 'https://www.youtube.com/results?search_query=back+extension+single+leg+with+band+exercise' },
   { name: 'Active couch stretch', detail: '1 min per side', reps: '1x', learnMoreUrl: 'https://www.youtube.com/results?search_query=active+couch+stretch' },
@@ -486,16 +486,24 @@ export const DAY_C_EXERCISES = [
 ];
 
 // ── Regressions for main exercises (client can step down if needed) ─────────
-export const MAIN_EXERCISE_REGRESSIONS: Record<
-  string,
-  {
+export type MainExerciseRegression = {
+  name: string;
+  detail: string | null;
+  reps: string | null;
+  learnMoreUrl?: string | null;
+  videoUrl?: string | null;
+  /** Optional step between easiest regression and full exercise (e.g. L-sit ladder). */
+  intermediateStep?: {
     name: string;
     detail: string | null;
     reps: string | null;
     learnMoreUrl?: string | null;
-  }
-> = {
-  'G-O-A-T-A Lunge': {
+    videoUrl?: string | null;
+  };
+};
+
+export const MAIN_EXERCISE_REGRESSIONS: Record<string, MainExerciseRegression> = {
+  'GOATA Lunge': {
     name: 'Split squat hold (supported)',
     detail: 'Use support/chair as needed',
     reps: '20–30 sec/side x2',
@@ -512,6 +520,12 @@ export const MAIN_EXERCISE_REGRESSIONS: Record<
     detail: 'Hands by hips, lift one or both feet slightly',
     reps: '10–20 sec x2',
     learnMoreUrl: 'https://www.youtube.com/results?search_query=l+sit+regression+seated+knee+tuck+hold',
+    intermediateStep: {
+      name: 'Assisted L-sit (blocks or dip bars)',
+      detail: 'Shorten the lever; press through hands; build hold time before full L-sit',
+      reps: '10–15 sec x2',
+      learnMoreUrl: 'https://www.youtube.com/results?search_query=assisted+L+sit+progression+blocks',
+    },
   },
   'Slant or Hackenschmidt squat': {
     name: 'Box squat (bodyweight)',
