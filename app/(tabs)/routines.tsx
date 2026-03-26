@@ -125,6 +125,11 @@ type ExerciseItemProps = {
   autoEasier?: boolean;
   /** Show movement-quality line under the exercise (default: all routine exercises). */
   showPoppingNote?: boolean;
+  /**
+   * Mon/Wed/Fri main list only: always put title + detail on their own row above actions so
+   * mobile web never squeezes the label into a single-character column.
+   */
+  mainBlockExercise?: boolean;
 };
 /** Viewport width below this: title row full width, actions wrap (avoids one-letter-per-line labels). */
 const NARROW_ROUTINE_WIDTH = 560;
@@ -141,9 +146,10 @@ function ExerciseItem({
   onTimerComplete,
   autoEasier = false,
   showPoppingNote = true,
+  mainBlockExercise = false,
 }: ExerciseItemProps) {
   const { width: windowWidth } = useWindowDimensions();
-  const breakTitleRow = windowWidth < NARROW_ROUTINE_WIDTH;
+  const breakTitleRow = mainBlockExercise || windowWidth < NARROW_ROUTINE_WIDTH;
   const hasLadder = !!(regression?.intermediateStep);
   const [tier, setTier] = useState<LsitTier>(() => (autoEasier ? 'easier' : 'full'));
   const [useRegression, setUseRegression] = useState(
@@ -247,6 +253,15 @@ function ExerciseItem({
     deactivateKeepAwake(keepAwakeTagRef.current);
   };
 
+  const webMainBlockText =
+    mainBlockExercise && Platform.OS === 'web'
+      ? ({
+          whiteSpace: 'normal',
+          wordBreak: 'normal',
+          overflowWrap: 'break-word',
+        } as import('react-native').TextStyle)
+      : undefined;
+
   return (
     <View style={styles.exerciseItemBlock}>
       <View style={[styles.exerciseRow, breakTitleRow && styles.exerciseRowWrap]}>
@@ -254,13 +269,20 @@ function ExerciseItem({
           <Text
             style={[
               styles.exerciseName,
-              Platform.OS === 'web' ? ({ maxWidth: '100%' } as const) : null,
+              mainBlockExercise ? styles.exerciseNameMainBlock : null,
+              webMainBlockText,
             ]}
           >
             {activeName}
           </Text>
           {(activeDetail || activeReps) && (
-            <Text style={styles.exerciseDetail}>
+            <Text
+              style={[
+                styles.exerciseDetail,
+                mainBlockExercise ? styles.exerciseDetailMainBlock : null,
+                webMainBlockText,
+              ]}
+            >
               {[activeDetail, activeReps].filter(Boolean).join(' · ')}
             </Text>
           )}
@@ -934,6 +956,7 @@ export default function RoutinesScreen() {
                 regression={MAIN_EXERCISE_REGRESSIONS[ex.name]}
                 onTimerComplete={onExerciseTimerComplete}
                 autoEasier={level === 'beginner'}
+                mainBlockExercise
               />
             ))}
           </Section>
@@ -1255,6 +1278,7 @@ const styles = StyleSheet.create({
     flexBasis: '100%',
     width: '100%',
     minWidth: 0,
+    alignSelf: 'stretch',
   },
   exerciseActionsRowWrap: {
     flexDirection: 'row',
@@ -1262,9 +1286,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     flexGrow: 1,
+    flexBasis: '100%',
     minWidth: 0,
+    maxWidth: '100%',
   },
   exerciseName: { fontSize: 14, fontWeight: '600', color: Colors.textPrimary },
+  exerciseNameMainBlock: {
+    width: '100%',
+    maxWidth: '100%',
+    flexShrink: 0,
+  },
+  exerciseDetailMainBlock: {
+    width: '100%',
+    maxWidth: '100%',
+  },
   tierBtnGroup: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, alignItems: 'center' },
   tierBtn: {
     paddingVertical: 6,

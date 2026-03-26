@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "main": "index.ts",
   "scripts": {
+    "build:android": "eas build --platform android --profile production",
+    "build:android:preview": "eas build --platform android --profile preview",
+    "eas:configure": "eas build:configure",
     "verify:pt-rehab": "tsx scripts/pt-rehab-selftest.ts",
     "verify:pt-merge-b": "tsx scripts/pt-merge-b-selftest.ts",
     "verify:pt-batch-c": "tsx scripts/pt-batch-c-selftest.ts",
@@ -39,6 +42,7 @@
   },
   "devDependencies": {
     "@types/react": "~19.1.0",
+    "eas-cli": "^18.4.0",
     "tsx": "^4.21.0",
     "typescript": "~5.9.2"
   },
