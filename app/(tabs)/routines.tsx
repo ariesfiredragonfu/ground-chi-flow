@@ -74,6 +74,10 @@ function formatTime(secs: number): string {
   return `${m}:${s}`;
 }
 
+function safeDeactivateKeepAwake(tag: string): void {
+  void deactivateKeepAwake(tag).catch(() => {});
+}
+
 function inferDurationSeconds(detail: string | null, reps: string | null): number | null {
   const text = `${detail ?? ''} ${reps ?? ''}`.toLowerCase();
   const m = text.match(/(\d+)(?:\s*[–-]\s*\d+)?\s*(sec|seconds|min|minutes)\b/);
@@ -171,7 +175,7 @@ function ExerciseItem({
   useEffect(() => {
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
-      deactivateKeepAwake(keepAwakeTagRef.current);
+      safeDeactivateKeepAwake(keepAwakeTagRef.current);
     };
   }, []);
 
@@ -236,7 +240,7 @@ function ExerciseItem({
           if (intervalRef.current) clearInterval(intervalRef.current);
           intervalRef.current = null;
           setTimerRunning(false);
-          deactivateKeepAwake(keepAwakeTagRef.current);
+          safeDeactivateKeepAwake(keepAwakeTagRef.current);
           onTimerComplete?.(activeName);
           return 0;
         }
@@ -250,7 +254,7 @@ function ExerciseItem({
     intervalRef.current = null;
     setTimerRunning(false);
     setTimeLeft(0);
-    deactivateKeepAwake(keepAwakeTagRef.current);
+    safeDeactivateKeepAwake(keepAwakeTagRef.current);
   };
 
   const webMainBlockText =
@@ -390,23 +394,23 @@ export default function RoutinesScreen() {
 
   useEffect(() => {
     if (!activeBreathworkDay) {
-      void deactivateKeepAwake(breathKeepAwakeTag);
+      safeDeactivateKeepAwake(breathKeepAwakeTag);
       return;
     }
     activateKeepAwakeAsync(breathKeepAwakeTag).catch(() => {});
     return () => {
-      void deactivateKeepAwake(breathKeepAwakeTag);
+      safeDeactivateKeepAwake(breathKeepAwakeTag);
     };
   }, [activeBreathworkDay]);
 
   useEffect(() => {
     if (!activeMeditationTimer) {
-      void deactivateKeepAwake(medKeepAwakeTag);
+      safeDeactivateKeepAwake(medKeepAwakeTag);
       return;
     }
     activateKeepAwakeAsync(medKeepAwakeTag).catch(() => {});
     return () => {
-      void deactivateKeepAwake(medKeepAwakeTag);
+      safeDeactivateKeepAwake(medKeepAwakeTag);
     };
   }, [activeMeditationTimer]);
 
@@ -414,8 +418,8 @@ export default function RoutinesScreen() {
     return () => {
       clearInterval(timerRef.current!);
       clearInterval(meditationTimerRef.current!);
-      deactivateKeepAwake(breathKeepAwakeTag);
-      deactivateKeepAwake(medKeepAwakeTag);
+      safeDeactivateKeepAwake(breathKeepAwakeTag);
+      safeDeactivateKeepAwake(medKeepAwakeTag);
       if (completionSoundRef.current) {
         completionSoundRef.current.unloadAsync().catch(() => {});
       }
@@ -531,7 +535,7 @@ export default function RoutinesScreen() {
         if (prev <= 1) {
           clearInterval(timerRef.current!);
           setActiveBreathworkDay(null);
-          deactivateKeepAwake(breathKeepAwakeTag);
+          safeDeactivateKeepAwake(breathKeepAwakeTag);
           markDay(day, true);
           playDoneSound().catch(() => {});
           Alert.alert('Breathwork Complete! 🌿', `Day ${day} done. Great work!`);
@@ -546,7 +550,7 @@ export default function RoutinesScreen() {
     clearInterval(timerRef.current!);
     setActiveBreathworkDay(null);
     setTimeLeft(0);
-    deactivateKeepAwake(breathKeepAwakeTag);
+    safeDeactivateKeepAwake(breathKeepAwakeTag);
   }, []);
 
   const startMeditationTimer = useCallback((duration: number) => {
@@ -558,7 +562,7 @@ export default function RoutinesScreen() {
         if (prev <= 1) {
           clearInterval(meditationTimerRef.current!);
           setActiveMeditationTimer(false);
-          deactivateKeepAwake(medKeepAwakeTag);
+          safeDeactivateKeepAwake(medKeepAwakeTag);
           playDoneSound().catch(() => {});
           Alert.alert('Meditation Complete 🌿', `${meditation.name} done. Nice focus.`);
           return 0;
@@ -572,7 +576,7 @@ export default function RoutinesScreen() {
     clearInterval(meditationTimerRef.current!);
     setActiveMeditationTimer(false);
     setMeditationTimeLeft(0);
-    deactivateKeepAwake(medKeepAwakeTag);
+    safeDeactivateKeepAwake(medKeepAwakeTag);
   }, []);
 
   const toggleComplete = useCallback((day: number) => {

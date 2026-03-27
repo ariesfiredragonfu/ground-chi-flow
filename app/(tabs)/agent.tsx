@@ -18,11 +18,15 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { sendToAgent, isBridgeConfigured, getBridgeUrlForDisplay } from '../../lib/grokBridge';
+import { Audio } from 'expo-av';
+import { sendToAgent, isBridgeConfigured, getBridgeUrlForDisplay, fetchCoachTts } from '../../lib/grokBridge';
 import type { ChatMessage } from '../../lib/grokBridge';
-import { HEALTH_AGENT_SYSTEM_PROMPT } from '../../constants/AgentPrompt';
+import { buildCoachSystemPrompt } from '../../constants/AgentPrompt';
+import { COACH_PERSONAS, COACH_VOICES } from '../../constants/coachPreferences';
+import type { CoachPersonaId } from '../../constants/coachPreferences';
 import { Colors } from '../../constants/Colors';
 import { useRoutineProgress, useRoutineDay, useVitals } from '../../hooks/useHealthData';
+import { useCoachPreferences } from '../../hooks/useCoachPreferences';
 
 type MessageRow = { id: string; role: 'user' | 'assistant'; content: string };
 
@@ -37,9 +41,13 @@ export default function AgentScreen() {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [playingId, setPlayingId] = useState<string | null>(null);
+  const [ttsLoadingId, setTtsLoadingId] = useState<string | null>(null);
   const scrollRef = useRef<ScrollView>(null);
+  const soundRef = useRef<Audio.Sound | null>(null);
 
   const bridgeOk = isBridgeConfigured();
+  const { voiceId, personaId, setVoiceId, setPersonaId, ready: prefsReady } = useCoachPreferences();
   const { progress: routineProgress } = useRoutineProgress();
   const { routineDay } = useRoutineDay();
   const { vitalsByDate } = useVitals();
@@ -77,6 +85,47 @@ export default function AgentScreen() {
     }
   }, [messages]);
 
+  useEffect(() => {
+    return () => {
+      void soundRef.current?.unloadAsync();
+      soundRef.current = null;
+    };
+  }, []);
+
+  async function playAssistantTts(messageId: string, text: string) {
+    if (!bridgeOk) return;
+    try {
+      setTtsLoadingId(messageId);
+      setError(null);
+      await Audio.setAudioModeAsync({
+        playsInSilentModeIOS: true,
+        staysActiveInBackground: false,
+      });
+      if (soundRef.current) {
+        await soundRef.current.unloadAsync();
+        soundRef.current = null;
+      }
+      const b64 = await fetchCoachTts(text, voiceId);
+      const uri = `data:audio/mpeg;base64,${b64}`;
+      const { sound } = await Audio.Sound.createAsync({ uri }, { shouldPlay: true });
+      soundRef.current = sound;
+      setPlayingId(messageId);
+      sound.setOnPlaybackStatusUpdate((status) => {
+        if (!status.isLoaded) return;
+        if (status.didJustFinish) {
+          setPlayingId(null);
+          void sound.unloadAsync();
+          soundRef.current = null;
+        }
+      });
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Could not play voice';
+      setError(msg);
+    } finally {
+      setTtsLoadingId(null);
+    }
+  }
+
   const handleSend = async (overrideText?: string) => {
     const text = (overrideText ?? input.trim()).trim();
     if (!text || loading) return;
@@ -100,9 +149,10 @@ export default function AgentScreen() {
 
     try {
       const contextBlock = buildContextString();
+      const basePrompt = buildCoachSystemPrompt(personaId);
       const systemContent = contextBlock
-        ? `Context (use only to personalize, do not repeat back): ${contextBlock}\n\n${HEALTH_AGENT_SYSTEM_PROMPT}`
-        : HEALTH_AGENT_SYSTEM_PROMPT;
+        ? `Context (use only to personalize, do not repeat back): ${contextBlock}\n\n${basePrompt}`
+        : basePrompt;
 
       const chatHistory: ChatMessage[] = [
         { role: 'system', content: systemContent },
@@ -153,6 +203,38 @@ export default function AgentScreen() {
           <Text style={styles.bridgeUrl} numberOfLines={1}>
             Bridge: {getBridgeUrlForDisplay()}
           </Text>
+          {prefsReady ? (
+            <>
+              <Text style={styles.pickerLabel}>Persona</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.pickerRow}>
+                {COACH_PERSONAS.map((p) => (
+                  <TouchableOpacity
+                    key={p.id}
+                    style={[styles.pickerChip, personaId === p.id && styles.pickerChipActive]}
+                    onPress={() => void setPersonaId(p.id as CoachPersonaId)}
+                  >
+                    <Text style={[styles.pickerChipText, personaId === p.id && styles.pickerChipTextActive]}>
+                      {p.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+              <Text style={styles.pickerLabel}>Voice</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.pickerRow}>
+                {COACH_VOICES.map((v) => (
+                  <TouchableOpacity
+                    key={v.id}
+                    style={[styles.pickerChip, voiceId === v.id && styles.pickerChipActive]}
+                    onPress={() => void setVoiceId(v.id)}
+                  >
+                    <Text style={[styles.pickerChipText, voiceId === v.id && styles.pickerChipTextActive]}>
+                      {v.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </>
+          ) : null}
         </View>
 
         {/* Messages */}
@@ -191,7 +273,27 @@ export default function AgentScreen() {
               style={[styles.bubbleWrap, m.role === 'user' ? styles.bubbleWrapUser : styles.bubbleWrapAssistant]}
             >
               <View style={[styles.bubble, m.role === 'user' ? styles.bubbleUser : styles.bubbleAssistant]}>
-                <Text style={[styles.bubbleText, m.role === 'user' && styles.bubbleTextUser]}>{m.content}</Text>
+                <View style={m.role === 'assistant' ? styles.bubbleTextCol : undefined}>
+                  <Text style={[styles.bubbleText, m.role === 'user' && styles.bubbleTextUser]}>{m.content}</Text>
+                </View>
+                {m.role === 'assistant' ? (
+                  <TouchableOpacity
+                    style={styles.ttsBtn}
+                    onPress={() => void playAssistantTts(m.id, m.content)}
+                    disabled={ttsLoadingId === m.id || loading}
+                    accessibilityLabel="Play reply as speech"
+                  >
+                    {ttsLoadingId === m.id ? (
+                      <ActivityIndicator size="small" color={Colors.primary} />
+                    ) : (
+                      <Ionicons
+                        name={playingId === m.id ? 'volume-high' : 'volume-medium-outline'}
+                        size={20}
+                        color={Colors.primary}
+                      />
+                    )}
+                  </TouchableOpacity>
+                ) : null}
               </View>
             </View>
           ))}
@@ -270,6 +372,22 @@ const styles = StyleSheet.create({
   headerTitle: { fontSize: 20, fontWeight: '800', color: Colors.textPrimary },
   headerSub: { fontSize: 13, color: Colors.textSecondary },
   bridgeUrl: { fontSize: 11, color: Colors.textMuted, marginTop: 4 },
+  pickerLabel: { fontSize: 11, fontWeight: '600', color: Colors.textMuted, marginTop: 10, marginBottom: 6 },
+  pickerRow: { flexDirection: 'row', gap: 8, paddingRight: 8 },
+  pickerChip: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    backgroundColor: Colors.bg,
+  },
+  pickerChipActive: {
+    borderColor: Colors.primary,
+    backgroundColor: Colors.bgCardLight,
+  },
+  pickerChipText: { fontSize: 12, color: Colors.textSecondary },
+  pickerChipTextActive: { color: Colors.primary, fontWeight: '600' },
 
   scroll: { flex: 1 },
   scrollContent: { padding: 16, paddingBottom: 24 },
@@ -353,9 +471,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.border,
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: 8,
   },
+  ttsBtn: { padding: 4, marginTop: -2 },
+  bubbleTextCol: { flex: 1, minWidth: 0 },
   bubbleText: { fontSize: 15, color: Colors.textPrimary, lineHeight: 22 },
   bubbleTextUser: { color: Colors.white },
   loadingText: { color: Colors.textSecondary, marginLeft: 4 },

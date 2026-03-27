@@ -2,7 +2,7 @@
   "expo": {
     "name": "GroundChiFlow",
     "slug": "GroundChiFlow",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "scheme": "groundchiflow",
@@ -15,9 +15,13 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.groundchiflow.app"
+      "bundleIdentifier": "com.groundchiflow.app",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
+      "versionCode": 2,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0F2027"

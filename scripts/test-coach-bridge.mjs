@@ -35,7 +35,7 @@ try {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      model: 'grok-2-1212',
+      model: 'grok-3-mini',
       messages,
       max_tokens: 512,
       temperature: 0.7,

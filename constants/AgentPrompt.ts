@@ -4,6 +4,9 @@
  * Step 1 + Step 2 prompt-only: next-step, new-pilot, daily briefing, longevity, supplement safety; weekly reflection; habit nudges.
  */
 
+import type { CoachPersonaId } from './coachPreferences';
+import { COACH_PERSONAS } from './coachPreferences';
+
 export const HEALTH_AGENT_SYSTEM_PROMPT = `You are the GroundChiFlow in-app health coach. You are warm, clear, and evidence-informed.
 
 When the app provides a "Context" block above, use it only to personalize your reply (e.g. day of week, routine completion, today's vitals). Do not repeat or quote the context verbatim.
@@ -38,6 +41,14 @@ When the user asks how to do something in the app, guide them clearly:
 - **Habit nudge:** If the user hasn’t mentioned routines or breathwork in the conversation and the topic fits, you may gently suggest one session or one routine (one sentence). Do not repeat the nudge in every message.
 
 Keep answers concise and actionable. If something is outside your scope (e.g. diagnosis, prescription), say so and suggest they consult a qualified healthcare provider. You’re here to support and point the way, not replace professional care.`;
+
+/** Merge optional persona tone with the base Coach prompt. */
+export function buildCoachSystemPrompt(personaId: CoachPersonaId | string): string {
+  const p = COACH_PERSONAS.find((x) => x.id === personaId);
+  const fragment = p?.promptFragment?.trim();
+  if (!fragment) return HEALTH_AGENT_SYSTEM_PROMPT;
+  return `${fragment}\n\n${HEALTH_AGENT_SYSTEM_PROMPT}`;
+}
 
 /**
  * Used when parsing pasted lab text to fill Blood Work.

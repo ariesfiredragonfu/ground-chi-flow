@@ -16,6 +16,12 @@ npm run ios        # iOS simulator (macOS only)
 npm run web        # Web browser
 ```
 
+### Coach bridge URL by environment
+
+- Local development (`npm start` / `npm run web`): set `EXPO_PUBLIC_GROK_BRIDGE_URL=http://127.0.0.1:5000` in `.env`.
+- Production (Google Play + hosted web): use `https://grok.howell-forge.com`.
+- EAS build profiles are pinned in `eas.json` so production builds do not ship with localhost.
+
 ---
 
 ## Firebase Setup (Required for Auth)

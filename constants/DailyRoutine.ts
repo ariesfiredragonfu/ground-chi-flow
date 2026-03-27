@@ -34,6 +34,7 @@ export const BREATHWORK = [
 
 // ── Core Balance (every day) ─────────────────────────────────────────────────
 // learnMoreUrl = YouTube search with exercise name pre-filled; user can hit Enter or edit.
+// Optional videoUrl: add a direct MP4/Web URL or Firebase Storage link when you have a placeholder clip (manual workflow).
 export const CORE_BALANCE = [
   { name: 'Lay on back — activate core triangle', detail: 'Activate core, glutes, pelvic floor. Sink lumbar to floor. Breathe through bottom of lumbar into the floor.', reps: null, learnMoreUrl: 'https://www.youtube.com/results?search_query=core+triangle+activation+floor' },
   { name: 'Leg extensions (on back)', detail: 'Core balance leg extensions. Activate glute.', reps: null, learnMoreUrl: 'https://www.youtube.com/results?search_query=leg+extensions+on+back+core' },

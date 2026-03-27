@@ -1,19 +1,29 @@
 {
   "cli": {
-    "version": ">= 16.0.0"
+    "version": ">= 16.0.0",
+    "appVersionSource": "remote"
   },
   "build": {
     "development": {
       "developmentClient": true,
-      "distribution": "internal"
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_GROK_BRIDGE_URL": "http://127.0.0.1:5000"
+      }
     },
     "preview": {
       "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_GROK_BRIDGE_URL": "https://grok.howell-forge.com"
+      },
       "android": {
         "buildType": "apk"
       }
     },
     "production": {
+      "env": {
+        "EXPO_PUBLIC_GROK_BRIDGE_URL": "https://grok.howell-forge.com"
+      },
       "android": {
         "buildType": "app-bundle"
       }

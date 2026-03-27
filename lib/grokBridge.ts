@@ -35,7 +35,7 @@ export async function sendToAgent(messages: ChatMessage[]): Promise<string> {
   const endpoint = `${base}/ask`;
 
   const body = {
-    model: 'grok-2-1212',
+    model: 'grok-3-mini',
     messages,
     max_tokens: 1024,
     temperature: 0.7,
@@ -65,4 +65,41 @@ export async function sendToAgent(messages: ChatMessage[]): Promise<string> {
 export function isBridgeConfigured(): boolean {
   const url = getBridgeUrl();
   return !!(url && url.startsWith('http'));
+}
+
+export interface CoachTtsResponse {
+  audio_base64?: string;
+  content_type?: string;
+  error?: string;
+}
+
+const MAX_TTS_CHARS = 4000;
+
+/**
+ * Request speech audio from bridge POST /coach/tts (ElevenLabs on server). Returns base64 MP3 or throws.
+ */
+export async function fetchCoachTts(text: string, voiceId: string): Promise<string> {
+  const base = getBridgeUrl().replace(/\/$/, '');
+  const endpoint = `${base}/coach/tts`;
+  const trimmed = text.trim().slice(0, MAX_TTS_CHARS);
+
+  const res = await fetch(endpoint, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text: trimmed, voice_id: voiceId }),
+  });
+
+  const data: CoachTtsResponse = await res.json().catch(() => ({}));
+
+  if (!res.ok) {
+    const err = data.error || res.statusText;
+    throw new Error(typeof err === 'string' ? err : `TTS failed (${res.status})`);
+  }
+
+  if (data.error) throw new Error(data.error);
+
+  const b64 = data.audio_base64;
+  if (!b64) throw new Error('No audio from bridge');
+
+  return b64;
 }
