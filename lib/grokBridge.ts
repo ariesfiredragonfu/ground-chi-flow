@@ -1,7 +1,7 @@
 /**
  * GroundChiFlow → Grok bridge client.
  * Calls the Fortress Grok bridge (/ask) so the API key stays server-side.
- * Set EXPO_PUBLIC_GROK_BRIDGE_URL in .env (e.g. https://grok.howell-forge.com).
+ * Set EXPO_PUBLIC_GROK_BRIDGE_URL in .env (e.g. https://bridge.howell-forge.com).
  */
 
 export interface ChatMessage {
@@ -14,7 +14,7 @@ export interface GrokBridgeResponse {
   error?: string;
 }
 
-const DEFAULT_BRIDGE_URL = 'https://grok.howell-forge.com';
+const DEFAULT_BRIDGE_URL = 'https://bridge.howell-forge.com';
 
 function getBridgeUrl(): string {
   const url = process.env.EXPO_PUBLIC_GROK_BRIDGE_URL;

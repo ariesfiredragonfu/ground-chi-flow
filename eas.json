@@ -14,7 +14,7 @@
     "preview": {
       "distribution": "internal",
       "env": {
-        "EXPO_PUBLIC_GROK_BRIDGE_URL": "https://grok.howell-forge.com"
+        "EXPO_PUBLIC_GROK_BRIDGE_URL": "https://bridge.howell-forge.com"
       },
       "android": {
         "buildType": "apk"
@@ -22,7 +22,7 @@
     },
     "production": {
       "env": {
-        "EXPO_PUBLIC_GROK_BRIDGE_URL": "https://grok.howell-forge.com"
+        "EXPO_PUBLIC_GROK_BRIDGE_URL": "https://bridge.howell-forge.com"
       },
       "android": {
         "buildType": "app-bundle"
