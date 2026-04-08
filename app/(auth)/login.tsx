@@ -23,13 +23,16 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import Constants from 'expo-constants';
 import { useAuth } from '../../context/AuthContext';
 import { Colors } from '../../constants/Colors';
+import { firebaseAvailable } from '../../lib/firebase';
+import { getBridgeUrlForDisplay } from '../../lib/grokBridge';
 import { HERO_BANNER } from '../../constants/DisclaimerResources';
 import { useRouter } from 'expo-router';
 
 export default function LoginScreen() {
-  const { signIn, signUp, loading, error, clearError, resetPassword, skipAuth } = useAuth();
+  const { signIn, signUp, authPending, error, clearError, resetPassword, skipAuth } = useAuth();
   const router = useRouter();
 
   const [mode, setMode] = useState<'login' | 'signup'>('login');
@@ -94,6 +97,14 @@ export default function LoginScreen() {
     skipAuth();
     router.replace('/(tabs)');
   };
+
+  const appVersion = Constants.expoConfig?.version ?? '—';
+  const nativeBuild =
+    Constants.nativeBuildVersion != null && String(Constants.nativeBuildVersion).length > 0
+      ? String(Constants.nativeBuildVersion)
+      : null;
+  const buildLabel = nativeBuild ? `build ${nativeBuild}` : Platform.OS === 'web' ? 'web' : 'dev';
+  const bridgeHost = getBridgeUrlForDisplay().replace(/^https?:\/\//, '');
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -194,11 +205,11 @@ export default function LoginScreen() {
 
             {/* Submit button */}
             <TouchableOpacity
-              style={[styles.btn, loading && styles.btnDisabled]}
+              style={[styles.btn, authPending && styles.btnDisabled]}
               onPress={handleSubmit}
-              disabled={loading}
+              disabled={authPending}
             >
-              {loading ? (
+              {authPending ? (
                 <ActivityIndicator color={Colors.white} />
               ) : (
                 <Text style={styles.btnText}>
@@ -229,6 +240,10 @@ export default function LoginScreen() {
 
           <Text style={styles.footer}>
             Your data stays private. 🔒
+          </Text>
+          <Text style={styles.buildInfo} selectable>
+            v{appVersion} ({buildLabel}) · {firebaseAvailable ? 'Account: ready' : 'Account: config missing'}{' '}
+            · Coach: {bridgeHost}
           </Text>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -343,5 +358,13 @@ const styles = StyleSheet.create({
     color: Colors.textMuted,
     fontSize: 12,
     marginTop: 24,
+  },
+  buildInfo: {
+    textAlign: 'center',
+    color: Colors.textMuted,
+    fontSize: 11,
+    marginTop: 10,
+    lineHeight: 15,
+    opacity: 0.85,
   },
 });

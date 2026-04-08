@@ -53,8 +53,16 @@ import {
   LONGEVITY_CARDIO,
   VERTICAL_LOAD_PROGRESSION,
   ADVANCED_VERTICAL_LEAP_PROGRESSION,
+  GYMNASTICS_FORZA_STYLE_PROGRESSION,
+  FLOOR_GYMNASTICS_PROGRESSION,
+  PARALLEL_BARS_GYMNASTICS_PROGRESSION,
+  UNEVEN_BARS_GYMNASTICS_PROGRESSION,
+  HIGH_BAR_GYMNASTICS_PROGRESSION,
+  LOW_BAR_GYMNASTICS_PROGRESSION,
+  FLOOR_FLIP_FOUNDATIONS_PROGRESSION,
   BALANCE_FUN_SPORTS,
   MEWING_FACE_EXERCISES_BY_LEVEL,
+  FACE_MOBILITY_EXERCISES_BY_LEVEL,
   NECK_EXERCISES_BY_LEVEL,
   HAND_MUDRAS_DAY_1,
   HAND_MUDRAS_DAY_3,
@@ -64,6 +72,8 @@ import {
   FOOT_EXERCISES_DAY_5,
   MAIN_EXERCISE_REGRESSIONS,
   NERVOUS_SYSTEM_QUICK_TWITCH_BY_DAY,
+  NERVOUS_SYSTEM_STABILITY_BALL_BY_DAY,
+  NERVOUS_SYSTEM_POOL_OPTIONS_BY_DAY,
 } from '../../constants/DailyRoutine';
 import type { MainExerciseRegression } from '../../constants/DailyRoutine';
 
@@ -481,6 +491,9 @@ export default function RoutinesScreen() {
   }
 
   const faceExercises = pickTwoLadderExercises(MEWING_FACE_EXERCISES_BY_LEVEL[level] || MEWING_FACE_EXERCISES_BY_LEVEL.beginner);
+  const faceMobilityExercises = pickTwoLadderExercises(
+    FACE_MOBILITY_EXERCISES_BY_LEVEL[level] || FACE_MOBILITY_EXERCISES_BY_LEVEL.beginner
+  );
   const neckExercises = pickTwoLadderExercises(NECK_EXERCISES_BY_LEVEL[level] || NECK_EXERCISES_BY_LEVEL.beginner);
 
   const ptProgram = settings.ptProgram;
@@ -501,6 +514,8 @@ export default function RoutinesScreen() {
   const mudras = routineDay === 1 ? HAND_MUDRAS_DAY_1 : routineDay === 3 ? HAND_MUDRAS_DAY_3 : HAND_MUDRAS_DAY_5;
   const feet = routineDay === 1 ? FOOT_EXERCISES_DAY_1 : routineDay === 3 ? FOOT_EXERCISES_DAY_3 : FOOT_EXERCISES_DAY_5;
   const quickTwitchFinisher = NERVOUS_SYSTEM_QUICK_TWITCH_BY_DAY[routineDay] ?? [];
+  const stabilityBallBlock = NERVOUS_SYSTEM_STABILITY_BALL_BY_DAY[routineDay] ?? [];
+  const poolOptionsBlock = NERVOUS_SYSTEM_POOL_OPTIONS_BY_DAY[routineDay] ?? [];
   const qigongRegressionByDay: Record<number, { title: string; videoUrl: string; videoTitle: string }> = {
     1: { title: 'Qigong regression: 8 Brocades basics', videoUrl: TAI_CHI_QI_GONG_BAGUA[1].videoUrl, videoTitle: TAI_CHI_QI_GONG_BAGUA[1].videoTitle },
     3: { title: 'Qigong regression: standing + breath flow', videoUrl: TAI_CHI_QI_GONG_BAGUA[4].videoUrl, videoTitle: TAI_CHI_QI_GONG_BAGUA[4].videoTitle },
@@ -819,6 +834,18 @@ export default function RoutinesScreen() {
               onTimerComplete={onExerciseTimerComplete}
             />
           ))}
+          <Text style={[styles.subsectionLabel, { marginTop: 14 }]}>Face mobility (beyond mewing)</Text>
+          {faceMobilityExercises.map((ex, i) => (
+            <ExerciseItem
+              key={`face-mob-${i}-${ex.name}`}
+              name={ex.name}
+              detail={ex.detail}
+              reps={ex.reps}
+              learnMoreUrl={ex.learnMoreUrl}
+              regression={ex.regression}
+              onTimerComplete={onExerciseTimerComplete}
+            />
+          ))}
         </Section>
         ) : null}
 
@@ -970,6 +997,42 @@ export default function RoutinesScreen() {
             {NERVOUS_SYSTEM_FASCIA.map((ex, i) => (
               <ExerciseItem key={`ns-${i}`} name={ex.name} detail={ex.detail} reps={ex.reps} videoUrl={'videoUrl' in ex ? optionalString(ex.videoUrl) : undefined} learnMoreUrl={'learnMoreUrl' in ex ? optionalString(ex.learnMoreUrl) : undefined} onTimerComplete={onExerciseTimerComplete} autoEasier={level === 'beginner'} />
             ))}
+            {stabilityBallBlock.length ? (
+              <>
+                <Text style={[styles.subsectionLabel, { marginTop: 12 }]}>Stability ball (Tue/Thu/Sat)</Text>
+                <Text style={styles.nsFasciaHint}>Reaction, deceleration, and core — Schroeder/Marinovich-inspired themes.</Text>
+                {stabilityBallBlock.map((ex, i) => (
+                  <ExerciseItem
+                    key={`ball-${routineDay}-${i}`}
+                    name={ex.name}
+                    detail={ex.detail}
+                    reps={ex.reps}
+                    learnMoreUrl={ex.learnMoreUrl}
+                    onTimerComplete={onExerciseTimerComplete}
+                    autoEasier={level === 'beginner'}
+                  />
+                ))}
+              </>
+            ) : null}
+            {poolOptionsBlock.length ? (
+              <>
+                <Text style={[styles.subsectionLabel, { marginTop: 12 }]}>Pool / water options (optional)</Text>
+                <Text style={styles.nsFasciaHint}>
+                  Competent swimmer only; shallow water; no breath-hold contests. Skip if no safe pool access.
+                </Text>
+                {poolOptionsBlock.map((ex, i) => (
+                  <ExerciseItem
+                    key={`pool-${routineDay}-${i}`}
+                    name={ex.name}
+                    detail={ex.detail}
+                    reps={ex.reps}
+                    learnMoreUrl={ex.learnMoreUrl}
+                    onTimerComplete={onExerciseTimerComplete}
+                    autoEasier={level === 'beginner'}
+                  />
+                ))}
+              </>
+            ) : null}
             {quickTwitchFinisher.length ? (
               <>
                 <Text style={[styles.subsectionLabel, { marginTop: 12 }]}>Marinovich/Schroeder + Quick Twitch Finisher</Text>
@@ -1008,6 +1071,16 @@ export default function RoutinesScreen() {
           </View>
           <Text style={styles.cardioDetail}>{LONGEVITY_CARDIO.zone5.detail}</Text>
 
+          <Text style={[styles.subsectionLabel, { marginTop: 14 }]}>Balance fun (advanced/medium)</Text>
+          <Text style={styles.balanceFunHint}>Build balance before heavy jump work — pick a sport to explore:</Text>
+          <View style={styles.balanceFunGrid}>
+            {BALANCE_FUN_SPORTS.map((s) => (
+              <View key={s} style={styles.balanceFunChip}>
+                <Text style={styles.balanceFunText}>{s}</Text>
+              </View>
+            ))}
+          </View>
+
           <Text style={[styles.subsectionLabel, { marginTop: 14 }]}>Vertical load progression</Text>
           {VERTICAL_LOAD_PROGRESSION.map((v, i) => (
             <View key={i} style={styles.progressionRow}>
@@ -1027,15 +1100,98 @@ export default function RoutinesScreen() {
             </View>
           ))}
 
-          <Text style={[styles.subsectionLabel, { marginTop: 14 }]}>Balance fun (advanced/medium)</Text>
-          <Text style={styles.balanceFunHint}>Pick up a new balance sport — mix fun with training:</Text>
-          <View style={styles.balanceFunGrid}>
-            {BALANCE_FUN_SPORTS.map((s) => (
-              <View key={s} style={styles.balanceFunChip}>
-                <Text style={styles.balanceFunText}>{s}</Text>
-              </View>
-            ))}
-          </View>
+          <Text style={[styles.subsectionLabel, { marginTop: 16 }]}>Advanced athlete track — gymnastics (optional)</Text>
+          <Text style={styles.nsFasciaHint}>
+            Optional progressions after jump training. “Beginner” here means first rungs of these tracks, not the main morning routine. Balance fun above complements this work.
+          </Text>
+
+          <Text style={[styles.subsectionLabel, { marginTop: 10 }]}>Gymnastics Forza–style (rings / harness)</Text>
+          <Text style={styles.nsFasciaHint}>Equipment optional; vendor-specific harness systems — learn before buying.</Text>
+          {GYMNASTICS_FORZA_STYLE_PROGRESSION.map((v, i) => (
+            <View key={`forza-${i}`} style={styles.progressionRow}>
+              <Text style={styles.progressionStage}>{v.stage}</Text>
+              <Text style={styles.progressionDetail}>{v.detail}</Text>
+              <TouchableOpacity style={styles.exerciseLinkBtn} onPress={() => Linking.openURL(v.learnMoreUrl)}>
+                <Ionicons name="open-outline" size={16} color={Colors.primary} />
+                <Text style={styles.exerciseLinkText}>Learn more</Text>
+              </TouchableOpacity>
+            </View>
+          ))}
+
+          <Text style={[styles.subsectionLabel, { marginTop: 14 }]}>Floor gymnastics (general)</Text>
+          {FLOOR_GYMNASTICS_PROGRESSION.map((v, i) => (
+            <View key={`floor-${i}`} style={styles.progressionRow}>
+              <Text style={styles.progressionStage}>{v.stage}</Text>
+              <Text style={styles.progressionDetail}>{v.detail}</Text>
+              <TouchableOpacity style={styles.exerciseLinkBtn} onPress={() => Linking.openURL(v.learnMoreUrl)}>
+                <Ionicons name="open-outline" size={16} color={Colors.primary} />
+                <Text style={styles.exerciseLinkText}>Learn more</Text>
+              </TouchableOpacity>
+            </View>
+          ))}
+
+          <Text style={[styles.subsectionLabel, { marginTop: 14 }]}>Parallel bars (style drills)</Text>
+          {PARALLEL_BARS_GYMNASTICS_PROGRESSION.map((v, i) => (
+            <View key={`pb-${i}`} style={styles.progressionRow}>
+              <Text style={styles.progressionStage}>{v.stage}</Text>
+              <Text style={styles.progressionDetail}>{v.detail}</Text>
+              <TouchableOpacity style={styles.exerciseLinkBtn} onPress={() => Linking.openURL(v.learnMoreUrl)}>
+                <Ionicons name="open-outline" size={16} color={Colors.primary} />
+                <Text style={styles.exerciseLinkText}>Learn more</Text>
+              </TouchableOpacity>
+            </View>
+          ))}
+
+          <Text style={[styles.subsectionLabel, { marginTop: 14 }]}>Uneven bars (basics)</Text>
+          {UNEVEN_BARS_GYMNASTICS_PROGRESSION.map((v, i) => (
+            <View key={`ub-${i}`} style={styles.progressionRow}>
+              <Text style={styles.progressionStage}>{v.stage}</Text>
+              <Text style={styles.progressionDetail}>{v.detail}</Text>
+              <TouchableOpacity style={styles.exerciseLinkBtn} onPress={() => Linking.openURL(v.learnMoreUrl)}>
+                <Ionicons name="open-outline" size={16} color={Colors.primary} />
+                <Text style={styles.exerciseLinkText}>Learn more</Text>
+              </TouchableOpacity>
+            </View>
+          ))}
+
+          <Text style={[styles.subsectionLabel, { marginTop: 14 }]}>High bar</Text>
+          {HIGH_BAR_GYMNASTICS_PROGRESSION.map((v, i) => (
+            <View key={`hb-${i}`} style={styles.progressionRow}>
+              <Text style={styles.progressionStage}>{v.stage}</Text>
+              <Text style={styles.progressionDetail}>{v.detail}</Text>
+              <TouchableOpacity style={styles.exerciseLinkBtn} onPress={() => Linking.openURL(v.learnMoreUrl)}>
+                <Ionicons name="open-outline" size={16} color={Colors.primary} />
+                <Text style={styles.exerciseLinkText}>Learn more</Text>
+              </TouchableOpacity>
+            </View>
+          ))}
+
+          <Text style={[styles.subsectionLabel, { marginTop: 14 }]}>Low bar</Text>
+          {LOW_BAR_GYMNASTICS_PROGRESSION.map((v, i) => (
+            <View key={`lb-${i}`} style={styles.progressionRow}>
+              <Text style={styles.progressionStage}>{v.stage}</Text>
+              <Text style={styles.progressionDetail}>{v.detail}</Text>
+              <TouchableOpacity style={styles.exerciseLinkBtn} onPress={() => Linking.openURL(v.learnMoreUrl)}>
+                <Ionicons name="open-outline" size={16} color={Colors.primary} />
+                <Text style={styles.exerciseLinkText}>Learn more</Text>
+              </TouchableOpacity>
+            </View>
+          ))}
+
+          <Text style={[styles.subsectionLabel, { marginTop: 14 }]}>Floor flip foundations (conditioning only)</Text>
+          <Text style={styles.nsFasciaHint}>
+            Full flips and advanced tumbling require a qualified coach, proper mats, and facility access. Do not attempt acrobatics unsupervised.
+          </Text>
+          {FLOOR_FLIP_FOUNDATIONS_PROGRESSION.map((v, i) => (
+            <View key={`flip-${i}`} style={styles.progressionRow}>
+              <Text style={styles.progressionStage}>{v.stage}</Text>
+              <Text style={styles.progressionDetail}>{v.detail}</Text>
+              <TouchableOpacity style={styles.exerciseLinkBtn} onPress={() => Linking.openURL(v.learnMoreUrl)}>
+                <Ionicons name="open-outline" size={16} color={Colors.primary} />
+                <Text style={styles.exerciseLinkText}>Learn more</Text>
+              </TouchableOpacity>
+            </View>
+          ))}
         </Section>
         ) : null}
 

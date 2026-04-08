@@ -38,9 +38,21 @@ export const BREATHWORK = [
 export const CORE_BALANCE = [
   { name: 'Lay on back — activate core triangle', detail: 'Activate core, glutes, pelvic floor. Sink lumbar to floor. Breathe through bottom of lumbar into the floor.', reps: null, learnMoreUrl: 'https://www.youtube.com/results?search_query=core+triangle+activation+floor' },
   { name: 'Leg extensions (on back)', detail: 'Core balance leg extensions. Activate glute.', reps: null, learnMoreUrl: 'https://www.youtube.com/results?search_query=leg+extensions+on+back+core' },
+  {
+    name: 'Dead bug',
+    detail: 'Arms to ceiling, hips and knees at 90°. Move opposite arm and leg only as far as you can keep low back gently pinned. Stop if back arches.',
+    reps: '8–10 slow/side',
+    learnMoreUrl: 'https://www.youtube.com/results?search_query=dead+bug+exercise+core+neutral+spine',
+  },
   { name: 'Bridge', detail: null, reps: null, learnMoreUrl: 'https://www.youtube.com/results?search_query=glute+bridge+exercise' },
   { name: 'Bridge butterflies', detail: null, reps: null, learnMoreUrl: 'https://www.youtube.com/results?search_query=bridge+butterfly+exercise' },
   { name: 'Bridge leg extensions', detail: null, reps: null, learnMoreUrl: 'https://www.youtube.com/results?search_query=bridge+leg+extension+exercise' },
+  {
+    name: 'Dead bug (advanced prep for prone work)',
+    detail: 'Smaller range or slower tempo; optional light ankle weights later. Re-brace core before rolling to stomach.',
+    reps: '6–8 reps/side',
+    learnMoreUrl: 'https://www.youtube.com/results?search_query=dead+bug+progression+slower+tempo+core',
+  },
   { name: 'Core triangle (on stomach)', detail: 'Laying on stomach, activate core triangle.', reps: null, learnMoreUrl: 'https://www.youtube.com/results?search_query=core+triangle+prone+exercise' },
   { name: 'Superman', detail: null, reps: null, learnMoreUrl: 'https://www.youtube.com/results?search_query=superman+exercise+back' },
   { name: 'Cat/Cow (all fours)', detail: 'Flow spine with breath. 5–10 rounds. Fascia + vagal.', reps: null, learnMoreUrl: 'https://www.youtube.com/results?search_query=cat+cow+stretch+yoga' },
@@ -78,6 +90,116 @@ export const NERVOUS_SYSTEM_QUICK_TWITCH_BY_DAY: Record<number, LadderExercise[]
     { name: 'Visual callout reaction step (Marinovich-inspired)', detail: 'React to random left/right/front cues', reps: '20–30 sec x3', learnMoreUrl: 'https://www.youtube.com/results?search_query=visual+reaction+step+drill' },
     { name: 'Iso switch punch-step (Schroeder-inspired)', detail: 'Brief iso hold, then explosive first step', reps: '3–4 reps/side x3', learnMoreUrl: 'https://www.youtube.com/results?search_query=isometric+to+explosive+first+step+drill' },
     { name: 'Split-jump snap (quick twitch)', detail: 'Small range, fast intent, controlled landing', reps: '5 reps/side x2', learnMoreUrl: 'https://www.youtube.com/results?search_query=split+jump+quick+twitch+drill' },
+  ],
+};
+
+/** Tue / Thu / Sat only — stability ball (Schroeder/Marinovich-inspired themes). */
+export const NERVOUS_SYSTEM_STABILITY_BALL_BY_DAY: Record<number, LadderExercise[]> = {
+  2: [
+    {
+      name: 'Forearm plank on ball (short lever)',
+      detail: 'Shins or thighs on ball; ribs down; quiet breathing',
+      reps: '20–40 sec x2',
+      learnMoreUrl: 'https://www.youtube.com/results?search_query=forearm+plank+on+stability+ball',
+    },
+    {
+      name: 'Seated ball march',
+      detail: 'Feet grounded; tall spine; small controlled steps',
+      reps: '30–45 sec x2',
+      learnMoreUrl: 'https://www.youtube.com/results?search_query=seated+march+on+exercise+ball',
+    },
+    {
+      name: 'Stir-the-pot (small range)',
+      detail: 'Forearms on ball; tiny circles; stop if shoulders or neck gripe',
+      reps: '8–10 each way',
+      learnMoreUrl: 'https://www.youtube.com/results?search_query=stir+the+pot+exercise+ball',
+    },
+  ],
+  4: [
+    {
+      name: 'Wall-supported ball squat',
+      detail: 'Ball behind low back; depth that feels stable',
+      reps: '8–10 reps x2',
+      learnMoreUrl: 'https://www.youtube.com/results?search_query=wall+squat+stability+ball',
+    },
+    {
+      name: 'Single-leg bridge with calves on ball',
+      detail: 'Hips level; short range first',
+      reps: '6–8/side',
+      learnMoreUrl: 'https://www.youtube.com/results?search_query=single+leg+bridge+feet+on+stability+ball',
+    },
+    {
+      name: 'Prone ball balance (hands or elbows)',
+      detail: 'Hips extended; find stillness; react to tiny wobble',
+      reps: '20–30 sec x2',
+      learnMoreUrl: 'https://www.youtube.com/results?search_query=prone+balance+on+exercise+ball',
+    },
+  ],
+  6: [
+    {
+      name: 'Push-up hands on ball (short range)',
+      detail: 'Controlled tempo; stop if wrists bother',
+      reps: '5–8 reps x2',
+      learnMoreUrl: 'https://www.youtube.com/results?search_query=push+up+hands+on+stability+ball',
+    },
+    {
+      name: 'Ball rollout (kneeling, partial)',
+      detail: 'Only as far as you can keep ribs connected',
+      reps: '6–8 reps x2',
+      learnMoreUrl: 'https://www.youtube.com/results?search_query=kneeling+ball+rollout+partial+range',
+    },
+    {
+      name: 'Seated lateral weight shift on ball',
+      detail: 'Small side-to-side; eyes optional on a fixed point',
+      reps: '20–30 sec x2',
+      learnMoreUrl: 'https://www.youtube.com/results?search_query=seated+lateral+shift+exercise+ball+balance',
+    },
+  ],
+};
+
+/** Tue / Thu / Sat only — optional pool work. Competent swimmer; shallow water; no hypoxic challenges. */
+export const NERVOUS_SYSTEM_POOL_OPTIONS_BY_DAY: Record<number, LadderExercise[]> = {
+  2: [
+    {
+      name: 'Chest-deep walking + long exhale',
+      detail: 'Easy pace; exhale like fogging a mirror; stop if dizzy.',
+      reps: '3–5 min',
+      learnMoreUrl: 'https://www.youtube.com/results?search_query=pool+walking+chest+deep+breathing',
+    },
+    {
+      name: 'Lateral step / shuffle (chest-deep)',
+      detail: 'Soft knees; controlled push off; stay in depth you can stand',
+      reps: '20–30 sec x3',
+      learnMoreUrl: 'https://www.youtube.com/results?search_query=lateral+shuffle+water+exercise',
+    },
+  ],
+  4: [
+    {
+      name: 'Forward/backward jog (shallow to chest-deep)',
+      detail: 'Low impact; stop if balance feels off',
+      reps: '3 x 30 sec',
+      learnMoreUrl: 'https://www.youtube.com/results?search_query=water+jogging+deep+water+exercise',
+    },
+    {
+      name: 'Supported single-leg stance (pool side)',
+      detail: 'Light fingertip touch for balance; switch legs',
+      reps: '20 sec/side x2',
+      learnMoreUrl: 'https://www.youtube.com/results?search_query=single+leg+balance+pool+exercise',
+    },
+  ],
+  6: [
+    {
+      name: 'Easy swim or walk + nasal rhythm',
+      detail: 'Comfortable effort only; buddy/lifeguard if open water (prefer pool).',
+      reps: '5–10 min',
+      learnMoreUrl: 'https://www.youtube.com/results?search_query=easy+swim+breathing+rhythm+beginner',
+    },
+    {
+      name: 'Side-lying kick hold (grip edge if needed)',
+      detail: 'Face out of water; neck relaxed; stop if shoulder strains',
+      reps: '15–20 sec/side x2',
+      learnMoreUrl: 'https://www.youtube.com/results?search_query=side+kick+water+exercise+pool',
+    },
   ],
 };
 
@@ -262,6 +384,70 @@ export const MEWING_FACE_EXERCISES_BY_LEVEL: Record<ExerciseLevel, LadderExercis
         reps: '1–2 min total',
         learnMoreUrl: 'https://www.youtube.com/results?search_query=gentle+mewing+tongue+suction+nasal+breathing',
       },
+    },
+  ],
+};
+
+/** Face mobility beyond mewing — jaw / cheek / brow; TMJ-friendly disclaimers. */
+export const FACE_MOBILITY_EXERCISES_BY_LEVEL: Record<ExerciseLevel, LadderExercise[]> = {
+  beginner: [
+    {
+      name: 'Gentle jaw glide (side to side)',
+      detail: 'Small pain-free range; lips lightly together; no clenching. Stop if clicking causes pain.',
+      reps: '6–8 glides',
+      learnMoreUrl: 'https://www.youtube.com/results?search_query=jaw+mobilization+side+to+side+gentle+TMJ',
+    },
+    {
+      name: 'Cheek / O–E vowel shapes',
+      detail: 'Exaggerate O then E without gripping jaw; smooth and slow.',
+      reps: '8–10 rounds',
+      learnMoreUrl: 'https://www.youtube.com/results?search_query=facial+yoga+O+E+mouth+exercise+jaw+relax',
+    },
+    {
+      name: 'Forehead / brow smooth (finger glide)',
+      detail: 'Light upward glide from brow to hairline; pair with nasal exhale.',
+      reps: '30–45 sec',
+      learnMoreUrl: 'https://www.youtube.com/results?search_query=forehead+tension+release+face+yoga',
+    },
+  ],
+  intermediate: [
+    {
+      name: 'Controlled jaw opening with tongue on palate',
+      detail: 'Tongue lightly on roof of mouth; open in a hinge path; no clicking through pain.',
+      reps: '8–10 reps',
+      learnMoreUrl: 'https://www.youtube.com/results?search_query=jaw+opening+exercise+tongue+on+palate',
+    },
+    {
+      name: 'Light cheek resistance smile',
+      detail: 'Fingers on cheeks offer gentle resistance; smile without grinding teeth.',
+      reps: '8 reps x2',
+      learnMoreUrl: 'https://www.youtube.com/results?search_query=cheek+resistance+facial+exercise',
+    },
+    {
+      name: 'Suboccipital / upper neck release (gentle nod)',
+      detail: 'Tiny nods while keeping face relaxed; pairs with face posture work.',
+      reps: '8–10 slow',
+      learnMoreUrl: 'https://www.youtube.com/results?search_query=suboccipital+release+gentle+chin+nod',
+    },
+  ],
+  advanced: [
+    {
+      name: 'Isometric jaw opening (finger blocks)',
+      detail: 'Very light; short holds; stop if TMJ symptoms flare.',
+      reps: '5 sec x4',
+      learnMoreUrl: 'https://www.youtube.com/results?search_query=jaw+isometric+opening+TMJ+exercise',
+    },
+    {
+      name: 'Multi-planar jaw glide combo',
+      detail: 'Side glide + slight open in pain-free window only.',
+      reps: '2 rounds of 6',
+      learnMoreUrl: 'https://www.youtube.com/results?search_query=jaw+mobility+multiplanar+gentle',
+    },
+    {
+      name: 'Nasal breathing + relaxed lip seal reset',
+      detail: 'Calm breathing while maintaining soft face; end session here if tense.',
+      reps: '1–2 min',
+      learnMoreUrl: 'https://www.youtube.com/results?search_query=nasal+breathing+jaw+relaxation+face',
     },
   ],
 };
@@ -620,6 +806,107 @@ export const ADVANCED_VERTICAL_LEAP_PROGRESSION = [
     stage: '7. Approach jump / broad jump',
     detail: 'Explosive intent with controlled landing. 3–4 reps x3.',
     learnMoreUrl: 'https://www.youtube.com/results?search_query=approach+jump+training+broad+jump+drill',
+  },
+];
+
+/** Advanced athlete track: rings/harness-style (Gymnastics Forza–inspired). Equipment optional. */
+export const GYMNASTICS_FORZA_STYLE_PROGRESSION = [
+  {
+    stage: 'F1. Assisted ring support (feet on floor/box)',
+    detail: 'Straight arms, rings turned out slightly; short holds; stop if wrists/elbows complain.',
+    learnMoreUrl: 'https://www.youtube.com/results?search_query=ring+support+hold+beginner+feet+assisted',
+  },
+  {
+    stage: 'F2. Straight-arm skill prep (coach-led)',
+    detail: 'Skin-the-cat prep, inversions, or planche leans only with qualified coaching and mats. See vendor for harness systems.',
+    learnMoreUrl: 'https://www.gymnasticsforza.com/',
+  },
+];
+
+/** Floor gymnastics — general skills (beginner → advanced conditioning language). */
+export const FLOOR_GYMNASTICS_PROGRESSION = [
+  {
+    stage: 'G1. Locomotion & rolls',
+    detail: 'Bear crawl, crab, forward roll to stacked mat. Quality over speed.',
+    learnMoreUrl: 'https://www.youtube.com/results?search_query=gymnastics+forward+roll+beginner+mat',
+  },
+  {
+    stage: 'G2. Handstand line work (wall or freestanding prep)',
+    detail: 'Shoulder flexion, stacked hips; bail-out plan with coach.',
+    learnMoreUrl: 'https://www.youtube.com/results?search_query=handstand+wall+line+drill+gymnastics',
+  },
+];
+
+/** Parallel bars — support and swing basics (style drills, not full routines). */
+export const PARALLEL_BARS_GYMNASTICS_PROGRESSION = [
+  {
+    stage: 'PB1. Support hold',
+    detail: 'Straight arms, shoulders active; short sets.',
+    learnMoreUrl: 'https://www.youtube.com/results?search_query=parallel+bars+support+hold+beginner',
+  },
+  {
+    stage: 'PB2. L-sit or tuck sit prep',
+    detail: 'Elevate feet on box if needed; keep shoulders down.',
+    learnMoreUrl: 'https://www.youtube.com/results?search_query=L+sit+parallel+bars+progression',
+  },
+];
+
+/** Uneven bars — low-hang and glide basics (women’s-style entry; general prep). */
+export const UNEVEN_BARS_GYMNASTICS_PROGRESSION = [
+  {
+    stage: 'UB1. Jump to front support (low bar)',
+    detail: 'Hollow body; chalk and grip care.',
+    learnMoreUrl: 'https://www.youtube.com/results?search_query=uneven+bars+jump+to+support+beginner',
+  },
+  {
+    stage: 'UB2. Glide swing prep (spotted or low bar)',
+    detail: 'Shape changes slow and small at first.',
+    learnMoreUrl: 'https://www.youtube.com/results?search_query=uneven+bars+glide+kip+prep',
+  },
+];
+
+/** High bar — hang and hollow/arch shapes. */
+export const HIGH_BAR_GYMNASTICS_PROGRESSION = [
+  {
+    stage: 'HB1. Dead hang + active shoulders',
+    detail: 'No collapsing; short sets.',
+    learnMoreUrl: 'https://www.youtube.com/results?search_query=high+bar+dead+hang+active+shoulders',
+  },
+  {
+    stage: 'HB2. Beat swing (small)',
+    detail: 'Coach-led; maintain grip.',
+    learnMoreUrl: 'https://www.youtube.com/results?search_query=high+bar+beat+swing+beginner',
+  },
+];
+
+/** Low bar — leg cuts and casts (entry-level). */
+export const LOW_BAR_GYMNASTICS_PROGRESSION = [
+  {
+    stage: 'LB1. Hang and hollow',
+    detail: 'Same shapes as high bar; lower fall height.',
+    learnMoreUrl: 'https://www.youtube.com/results?search_query=low+bar+gymnastics+hollow+hang',
+  },
+  {
+    stage: 'LB2. Leg lifts / lifts to horizontal',
+    detail: 'Control swing; avoid slamming hips.',
+    learnMoreUrl: 'https://www.youtube.com/results?search_query=low+bar+leg+lifts+gymnastics',
+  },
+];
+
+/**
+ * Floor flip foundations — conditioning only. Full flips require qualified coaching, mats, and progressions.
+ * Do not attempt acrobatics unsupervised.
+ */
+export const FLOOR_FLIP_FOUNDATIONS_PROGRESSION = [
+  {
+    stage: 'T1. Jump mechanics & soft landing',
+    detail: 'Snap down to athletic stance; absorb quietly. Build before rotation.',
+    learnMoreUrl: 'https://www.youtube.com/results?search_query=gymnastics+jump+landing+mechanics',
+  },
+  {
+    stage: 'T2. Rolls / wedge prep (coach + mats)',
+    detail: 'Backward roll to stacked mats; tuck shapes; full flips only in-gym with supervision.',
+    learnMoreUrl: 'https://www.youtube.com/results?search_query=backward+roll+progression+stacked+mats',
   },
 ];
 

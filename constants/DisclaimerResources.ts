@@ -106,6 +106,14 @@ export const RELATED_ECOSYSTEM = [
     detail: '13 trackers: meditation, workouts, nutrition, sleep. AI timing for training, hydration, meditation.',
     url: 'https://wellnesscore.app/',
   },
+  {
+    id: 'gymnasticsforza',
+    name: 'Gymnastics Forza',
+    tagline: 'Rings / harness–style gymnastics strength',
+    detail:
+      'Progressive bodyweight and rings work. GroundChiFlow lists educational progressions only — follow vendor guidance for equipment and formal programs.',
+    url: 'https://www.gymnasticsforza.com/',
+  },
 ];
 
 // Attributions for content used in the app
@@ -116,4 +124,9 @@ export const ATTRIBUTIONS = [
   { section: 'Tai Chi 8 Form', source: 'Don Fiore (YouTube)', url: 'https://www.youtube.com/watch?v=6L43P1MY2KA' },
   { section: '8 Brocades (Ba Duan Jin)', source: 'Various (YouTube)', url: 'https://www.youtube.com/watch?v=ylXD51w3geE' },
   { section: '24 Form sketches', source: 'draketo.de (CC BY-SA)', url: 'https://www.draketo.de/anderes/taijiquan-form.html' },
+  {
+    section: 'Optional gymnastics & tumbling progressions',
+    source: 'Educational summaries + search links',
+    url: 'https://www.youtube.com/results?search_query=USA+gymnastics+safety+tumbling+progressions',
+  },
 ];

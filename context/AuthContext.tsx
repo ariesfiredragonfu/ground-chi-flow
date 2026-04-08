@@ -32,7 +32,10 @@ export const ADMIN_EMAIL = 'admin@groundchiflow.com';
 
 interface AuthContextType {
   user: User | null;
-  loading: boolean;
+  /** True until first auth state is known (Firebase off or first onAuthStateChanged). Root layout uses this — not sign-in button. */
+  initializing: boolean;
+  /** True while sign-in / sign-up request is in flight. Does not unmount the login screen. */
+  authPending: boolean;
   devBypass: boolean;
   isAdmin: boolean;
   signIn: (email: string, password: string) => Promise<void>;
@@ -48,7 +51,8 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [initializing, setInitializing] = useState(true);
+  const [authPending, setAuthPending] = useState(false);
   const [devBypass, setDevBypass] = useState(() => {
     if (typeof sessionStorage === 'undefined') return false;
     try {
@@ -61,16 +65,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!auth || !firebaseAvailable) {
-      setLoading(false);
+      setInitializing(false);
       return;
     }
 
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       setUser(firebaseUser);
-      setLoading(false);
+      setInitializing(false);
     });
 
-    const timeout = setTimeout(() => setLoading(false), 5000);
+    const timeout = setTimeout(() => setInitializing(false), 5000);
     return () => {
       unsubscribe();
       clearTimeout(timeout);
@@ -84,12 +88,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     try {
       setError(null);
-      setLoading(true);
+      setAuthPending(true);
       await signInWithEmailAndPassword(auth, email, password);
     } catch (err: any) {
       setError(friendlyError(err?.code || ''));
     } finally {
-      setLoading(false);
+      setAuthPending(false);
     }
   };
 
@@ -100,12 +104,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     try {
       setError(null);
-      setLoading(true);
+      setAuthPending(true);
       await createUserWithEmailAndPassword(auth, email, password);
     } catch (err: any) {
       setError(friendlyError(err?.code || ''));
     } finally {
-      setLoading(false);
+      setAuthPending(false);
     }
   };
 
@@ -149,7 +153,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (typeof sessionStorage !== 'undefined') sessionStorage.setItem(GUEST_STORAGE_KEY, '1');
     } catch {}
     setDevBypass(true);
-    setLoading(false);
+    setInitializing(false);
   };
 
   const clearError = () => setError(null);
@@ -161,7 +165,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     <AuthContext.Provider
       value={{
         user: effectiveUser,
-        loading,
+        initializing,
+        authPending,
         devBypass,
         isAdmin,
         signIn,
@@ -203,6 +208,8 @@ function friendlyError(code: string): string {
       return 'Sign-in is not available. Please contact support.';
     case 'auth/network-request-failed':
       return 'Network error. Check your connection and try again.';
+    case 'auth/unauthorized-domain':
+      return 'This domain is not authorized for sign-in. In Firebase Console → Authentication → Settings, add this site under Authorized domains (e.g. howell-forge.com and your GitHub Pages host).';
     case 'auth/operation-not-allowed':
       return 'Email/password sign-in is not enabled. Enable it in Firebase Console → Authentication → Sign-in method.';
     default:

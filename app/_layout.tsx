@@ -57,12 +57,12 @@ class RootErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState
 }
 
 function RootLayoutNav() {
-  const { user, loading } = useAuth();
+  const { user, initializing } = useAuth();
   const router = useRouter();
   const segments = useSegments();
 
   useEffect(() => {
-    if (loading) return;
+    if (initializing) return;
 
     const inAuthGroup = segments[0] === '(auth)';
 
@@ -73,9 +73,9 @@ function RootLayoutNav() {
       // Signed in but on auth screens — push to app
       router.replace('/(tabs)');
     }
-  }, [user, loading, segments]);
+  }, [user, initializing, segments]);
 
-  if (loading) {
+  if (initializing) {
     return (
       <View
         style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: Colors.bg }}

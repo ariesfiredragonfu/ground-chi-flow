@@ -47,6 +47,13 @@ See `docs/ADMIN_CREDENTIALS.md` for the admin email/password. Same flow: Sign In
 - Make sure `.env` has all `EXPO_PUBLIC_FIREBASE_*` vars (copy from `.env.example`, get values from [Firebase Console](https://console.firebase.google.com) → Project Settings → Your apps).
 - Restart the app after changing `.env` (`npm start` again).
 
+### Website (GitHub Pages) — “Create Account” looks dead or only a spinner
+
+1. **Deploy** a build that includes the auth UX fix (sign-up no longer replaces the whole page with the root loading spinner — you should stay on the form and see errors or the button spinner).
+2. **Firebase Console** → Authentication → **Sign-in method** → **Email/Password** enabled.
+3. Same place → **Settings** → **Authorized domains** → add **`howell-forge.com`**, **`www.howell-forge.com`**, and **`ariesfiredragonfu.github.io`** (GitHub Pages) if missing. Without the domain you’re loading from, Firebase returns `auth/unauthorized-domain` (shown in the red error box after the fix).
+4. **CI secrets:** The static web export must receive all `EXPO_PUBLIC_FIREBASE_*` values at build time (see Hardware_Factory `docs/WHERE_TO_FIND_SECRETS.md`). If they’re missing, you’ll see “Sign-up is not available…”
+
 ---
 
 ## 2. In-app Health Coach agent
@@ -58,7 +65,7 @@ The **Coach** tab is your in-app expert for:
 
 ### How it works
 
-- You type in the Coach tab; the app sends your message (and conversation history) to the **Grok bridge** (e.g. `https://grok.howell-forge.com/ask`).
+- You type in the Coach tab; the app sends your message (and conversation history) to the **Grok bridge** (e.g. `https://bridge.howell-forge.com/ask`).
 - The API key lives only on the server; the app never sees it.
 - The agent uses a system prompt that makes it an expert in natural health and in guiding users around the app.
 
@@ -70,7 +77,7 @@ You only need to do this once:
 2. **Find or create a file named exactly `.env`** (it may be hidden; “Show hidden files” in your file manager or use your editor’s “Open file” and type `.env`).
 3. **Add this one line** (or add it if you already have other lines in `.env`):
    ```
-   EXPO_PUBLIC_GROK_BRIDGE_URL=https://grok.howell-forge.com
+   EXPO_PUBLIC_GROK_BRIDGE_URL=https://bridge.howell-forge.com
    ```
    Use your real Grok bridge URL if it’s different (e.g. your tunnel hostname).
 4. **Save the file.** Restart the app (`npm start` again). Open the **Coach** tab and ask something (e.g. “How do I log my blood work?”).

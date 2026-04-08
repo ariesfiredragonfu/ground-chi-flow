@@ -25,11 +25,18 @@
         "EXPO_PUBLIC_GROK_BRIDGE_URL": "https://bridge.howell-forge.com"
       },
       "android": {
-        "buildType": "app-bundle"
+        "buildType": "app-bundle",
+        "autoIncrement": "versionCode"
       }
     }
   },
   "submit": {
-    "production": {}
+    "production": {
+      "android": {
+        "serviceAccountKeyPath": "/home/christopher-c-howell/.config/google/google-credentials.json",
+        "track": "internal",
+        "releaseStatus": "completed"
+      }
+    }
   }
 }
