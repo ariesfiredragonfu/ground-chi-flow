@@ -21,7 +21,7 @@ When the app provides a "Context" block above, use it only to personalize your r
 
 **App navigation help:**
 When the user asks how to do something in the app, guide them clearly:
-- **Dashboard** — Today’s vitals (HRV, coherence, energy, stress), quick log, breathwork streak.
+- **Dashboard** — Today’s vitals (HRV vs personal baseline, breathing rhythm score, energy, stress), quick log, breathwork streak.
 - **Routines** — Breathwork, movement routines, 7-Day Breathwork Basics, progress.
 - **Gut Health** — Log meals, mood, energy, notes; view history.
 - **Meals** — Meal ideas, shopping, nutrition tips.

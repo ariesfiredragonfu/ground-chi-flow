@@ -51,8 +51,9 @@ const BIOMARKERS = [
     icon: 'heart-outline' as const,
     color: Colors.hrv,
     source: 'Wearable (Oura, Apple Watch, Garmin)',
-    optimalRange: '> 50 ms',
-    description: 'Heart Rate Variability — key marker of nervous system resilience.',
+    optimalRange: 'Your own trend (no fixed cutoff)',
+    description:
+      'Heart rate variability — look at your personal pattern over time; norms vary by age, device, and metric type.',
   },
   {
     key: 'homocysteine',

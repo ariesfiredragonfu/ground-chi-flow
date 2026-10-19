@@ -1,7 +1,7 @@
 /**
  * Dashboard / Home screen
  *
- * Displays mock health metrics for HRV, Coherence, Daily Energy, Sleep,
+ * Displays health metrics for HRV, breathing-rhythm score, Daily Energy, Sleep,
  * and Stress. Uses ProgressCircle for visual ring indicators and MetricCard
  * for numeric values.
  *
@@ -28,6 +28,11 @@ import LogVitalsModal from '../../components/LogVitalsModal';
 import { Colors } from '../../constants/Colors';
 import { DISCLAIMER, HERO_BANNER } from '../../constants/DisclaimerResources';
 import { useVitals } from '../../hooks/useHealthData';
+import {
+  computeHrvBaseline,
+  getBreathingRhythmRingLabel,
+  getHrvInsightMessage,
+} from '../../lib/hrvInsights';
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 const TODAY = new Date().toLocaleDateString('en-US', {
@@ -47,13 +52,6 @@ const MOCK_METRICS = {
   breathworkStreak: 5,
 };
 
-// ── Insight messages based on HRV ─────────────────────────────────────────
-function getHRVInsight(hrv: number): string {
-  if (hrv >= 70) return '🟢 Excellent recovery. Great day for high-intensity work.';
-  if (hrv >= 55) return '🟡 Good recovery. Moderate activity recommended.';
-  return '🔴 Lower HRV today. Prioritise breathwork and rest.';
-}
-
 export default function DashboardScreen() {
   const { user, devBypass, signOut } = useAuth();
   const router = useRouter();
@@ -69,7 +67,12 @@ export default function DashboardScreen() {
   const sleepValue = vitals?.sleepHrs ?? MOCK_METRICS.sleep.value;
   const energyValue = vitals?.energy ?? MOCK_METRICS.energy.value;
   const stressPct = vitals?.stress != null ? vitals.stress * 10 : MOCK_METRICS.stress.percentage;
-  const coherencePct = vitals?.coherence ?? MOCK_METRICS.coherence.percentage;
+  const breathingRhythmPct = vitals?.coherence ?? MOCK_METRICS.coherence.percentage;
+  const hrvBaseline = computeHrvBaseline(vitalsByDate, today);
+  const hrvInsight = getHrvInsightMessage({
+    todayLoggedHrv: vitals?.hrv,
+    baseline: hrvBaseline,
+  });
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -115,9 +118,7 @@ export default function DashboardScreen() {
         {/* ── HRV Insight Banner ─────────────────────────────────── */}
         <View style={styles.insightBanner}>
           <Ionicons name="information-circle-outline" size={18} color={Colors.secondary} />
-          <Text style={styles.insightText}>
-            {getHRVInsight(hrvValue)}
-          </Text>
+          <Text style={styles.insightText}>{hrvInsight}</Text>
         </View>
 
         {/* ── Primary Rings ──────────────────────────────────────── */}
@@ -125,13 +126,13 @@ export default function DashboardScreen() {
         <View style={styles.ringsRow}>
           <View style={styles.ringItem}>
             <ProgressCircle
-              percentage={coherencePct}
+              percentage={breathingRhythmPct}
               size={90}
               color={Colors.secondary}
-              label={coherencePct >= 70 ? 'High' : coherencePct >= 40 ? 'Medium' : 'Low'}
-              sublabel="Coherence"
+              label={getBreathingRhythmRingLabel(breathingRhythmPct)}
+              sublabel="Rhythm"
             />
-            <Text style={styles.ringLabel}>Heart Coherence</Text>
+            <Text style={styles.ringLabel}>Breathing rhythm score</Text>
           </View>
 
           <View style={styles.ringItem}>
