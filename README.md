@@ -32,6 +32,18 @@ npm run web        # Web browser
 4. In **Project Settings → Your apps → Web app**, copy the `firebaseConfig`.
 5. Paste your config into `lib/firebase.ts` (replace the placeholder values).
 
+### App tabs (matches `app/(tabs)/_layout.tsx`)
+
+| Tab | File | Notes |
+|-----|------|--------|
+| Dashboard | `index.tsx` | HRV, breathing-rhythm score, quick log |
+| Coach | `agent.tsx` | Local / dev builds with Grok bridge — **not yet in the live hosted app** |
+| Routines | `routines.tsx` | Breathwork programs + timer |
+| Gut Health | `gut-health.tsx` | Daily gut log |
+| Meals | `meals.tsx` | Meal tracking |
+| Blood Work | `blood-work.tsx` | Biomarker manual entry |
+| Resources | `resources.tsx` | Safety, rehab pathways, attributions |
+
 ---
 
 ## Folder Structure
@@ -44,11 +56,14 @@ GroundChiFlow/
 │   │   ├── _layout.tsx      # Auth stack layout
 │   │   └── login.tsx        # Login + Signup screen
 │   └── (tabs)/
-│       ├── _layout.tsx      # Tab bar config
-│       ├── index.tsx        # Dashboard (mock metrics, HRV, coherence)
+│       ├── _layout.tsx      # Tab bar config (top Material tabs)
+│       ├── index.tsx        # Dashboard — HRV vs personal baseline, vitals rings
+│       ├── agent.tsx        # Coach (AI chat + TTS; **local builds only** — not in live hosted app yet)
 │       ├── routines.tsx     # 7-Day Breathwork Basics + timer
-│       ├── gut-health.tsx   # Daily gut health log (AsyncStorage)
-│       └── blood-work.tsx   # Biomarker tracker + manual entry
+│       ├── gut-health.tsx   # Daily gut health log
+│       ├── meals.tsx        # Meals tracking
+│       ├── blood-work.tsx   # Biomarker tracker + manual entry
+│       └── resources.tsx    # Safety copy, rehab pathways, attributions
 ├── components/
 │   ├── MetricCard.tsx       # Numeric metric card with icon + trend
 │   └── ProgressCircle.tsx   # SVG ring chart (react-native-svg)
@@ -80,7 +95,7 @@ GroundChiFlow/
 
 ### 1. Live HRV Data
 Connect to Apple Health (`expo-health`) or Oura Ring / Garmin API.
-Replace mock values in `app/(tabs)/index.tsx`.
+Dashboard copy compares today’s reading to a **personal baseline** (`lib/hrvInsights.ts`), not fixed population cutoffs.
 
 ### 2. Firebase Firestore Sync
 In `routines.tsx` and `gut-health.tsx`, replace `AsyncStorage` calls with:

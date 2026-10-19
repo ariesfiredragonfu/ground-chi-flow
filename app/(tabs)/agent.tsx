@@ -72,7 +72,9 @@ export default function AgentScreen() {
       if (vitals.hrv != null) v.push(`HRV: ${vitals.hrv} ms`);
       if (vitals.energy != null) v.push(`energy: ${vitals.energy}/10`);
       if (vitals.stress != null) v.push(`stress: ${Math.round((vitals.stress ?? 0) * 10)}/10`);
-      if (vitals.coherence != null) v.push(`coherence: ${vitals.coherence}%`);
+      if (vitals.coherence != null) {
+        v.push(`breathing rhythm score: ${vitals.coherence}%`);
+      }
       if (vitals.sleepHrs != null) v.push(`sleep: ${vitals.sleepHrs} hrs`);
       if (v.length) parts.push(v.join(', ') + '.');
     }

@@ -11,6 +11,8 @@
     "verify:pt-batch-c": "tsx scripts/pt-batch-c-selftest.ts",
     "verify:pt-batch-e": "tsx scripts/pt-batch-e-selftest.ts",
     "verify:pt-handoff": "npm run verify:pt-rehab && npm run verify:pt-merge-b && npm run verify:pt-batch-c && npm run verify:pt-batch-e",
+    "verify:hrv-insights": "tsx scripts/hrv-insights-selftest.ts",
+    "typecheck": "tsc --noEmit",
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
