@@ -11,6 +11,16 @@ export const HERO_BANNER = {
   subline: 'Rehab · Routines · Gut · Nutrition · Longevity — mind, body & beyond.',
 };
 
+/** Shown at sign-in and top of Resources — required for store / paid wellness apps. */
+export const MEDICAL_DISCLAIMER = {
+  title: 'Not medical advice',
+  body: `GroundChiFlow is a wellness and education tool. It does not diagnose, treat, cure, or prevent any disease.
+
+Numbers and suggestions in the app (including HRV, biomarkers, and routine prompts) are for personal tracking and general wellbeing only — not clinical guidance.
+
+Always consult a qualified healthcare provider before starting or changing exercise, nutrition, or supplement routines, especially if you are pregnant, injured, or managing a medical condition.`,
+};
+
 export const DISCLAIMER = {
   title: 'Before You Begin',
   body: `This system is for advanced-stage beginner rehab and beyond. It is not for complete beginners or those with acute injury.
@@ -62,8 +72,8 @@ export const FRONT_RUNNERS = [
 
 // Lifestyle pillars often overlooked (Stanford longevity, Harvard)
 export const LIFESTYLE_EXTRAS = [
-  { id: 'gratitude', title: 'Gratitude & reflection', detail: 'Boosts wellbeing, sleep, immune function. Simple daily practice.' },
-  { id: 'social', title: 'Social connection', detail: 'Family, friends, community. Extends longevity, prevents chronic disease.' },
+  { id: 'gratitude', title: 'Gratitude & reflection', detail: 'Many people find it supports mood and sleep. Simple daily practice.' },
+  { id: 'social', title: 'Social connection', detail: 'Family, friends, community. Often linked to quality of life and healthy habits.' },
   { id: 'cognitive', title: 'Cognitive engagement', detail: 'Learn, challenge the brain. Preserves function as we age.' },
 ];
 

@@ -28,7 +28,7 @@ import { useAuth } from '../../context/AuthContext';
 import { Colors } from '../../constants/Colors';
 import { firebaseAvailable } from '../../lib/firebase';
 import { getBridgeUrlForDisplay } from '../../lib/grokBridge';
-import { HERO_BANNER } from '../../constants/DisclaimerResources';
+import { HERO_BANNER, MEDICAL_DISCLAIMER } from '../../constants/DisclaimerResources';
 import { useRouter } from 'expo-router';
 
 export default function LoginScreen() {
@@ -238,6 +238,11 @@ export default function LoginScreen() {
             </TouchableOpacity>
           </View>
 
+          <View style={styles.medicalDisclaimerBox}>
+            <Text style={styles.medicalDisclaimerTitle}>{MEDICAL_DISCLAIMER.title}</Text>
+            <Text style={styles.medicalDisclaimerBody}>{MEDICAL_DISCLAIMER.body}</Text>
+          </View>
+
           <Text style={styles.footer}>
             Your data stays private. 🔒
           </Text>
@@ -353,6 +358,27 @@ const styles = StyleSheet.create({
   skipRow: { marginTop: 24, alignItems: 'center', paddingVertical: 12, paddingHorizontal: 16, borderWidth: 1, borderColor: Colors.border, borderRadius: 12 },
   skipText: { color: Colors.primary, fontSize: 16, fontWeight: '700' },
   skipSub: { color: Colors.textSecondary, fontSize: 12, marginTop: 4, textAlign: 'center' },
+  medicalDisclaimerBox: {
+    marginTop: 20,
+    padding: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    backgroundColor: Colors.bgCard,
+  },
+  medicalDisclaimerTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: Colors.warning,
+    marginBottom: 6,
+    textAlign: 'center',
+  },
+  medicalDisclaimerBody: {
+    fontSize: 11,
+    lineHeight: 16,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+  },
   footer: {
     textAlign: 'center',
     color: Colors.textMuted,

@@ -82,7 +82,7 @@ You can skip Apple for now and focus on web + Android.
 
 ## 4. Pre-launch checklist
 
-- [ ] Remove “Skip for now” (done)
+- [ ] Remove or gate “Skip for now” for production (still present on login — see `docs/RELEASE-READINESS.md`)
 - [ ] Firebase production config (`.env` with live keys)
 - [ ] Stripe product + price created
 - [ ] Backend: checkout + webhook + subscription check

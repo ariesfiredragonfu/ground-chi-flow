@@ -1,100 +1,99 @@
 # GroundChiFlow 🌿
 
-**Health & Wellness Tracking — Nervous System · Breathwork · Gut & Cellular Health**
+**Wellness tracking — nervous system · breathwork · gut · routines**
 
-A React Native (Expo) app for tracking HRV, breathwork routines, gut health logs, and biomarkers.
+React Native (Expo) app for logging HRV and vitals, daily breathwork/routine checklists, gut logs, and biomarker notes. Coach/voice features call an external Grok bridge (optional).
 
 ---
 
-## Quick Start
+## Quick start
 
 ```bash
-cd GroundChiFlow
-npm start          # Opens Expo Go QR code
-npm run android    # Android emulator
-npm run ios        # iOS simulator (macOS only)
-npm run web        # Web browser
+cd GroundChiFlow   # or clone root if this repo is the app root
+cp .env.example .env   # add EXPO_PUBLIC_FIREBASE_* and optionally EXPO_PUBLIC_GROK_BRIDGE_URL
+npm ci
+npm start            # Expo dev server (QR / web)
+npm run android
+npm run ios          # macOS only
+npm run web          # or ./run-web.sh
 ```
 
-### Coach bridge URL by environment
+### Coach bridge URL
 
-- Local development (`npm start` / `npm run web`): set `EXPO_PUBLIC_GROK_BRIDGE_URL=http://127.0.0.1:5000` in `.env`.
-- Production (Google Play + hosted web): use `https://grok.howell-forge.com`.
-- EAS build profiles are pinned in `eas.json` so production builds do not ship with localhost.
+| Environment | `EXPO_PUBLIC_GROK_BRIDGE_URL` |
+|-------------|-------------------------------|
+| Local dev | `http://127.0.0.1:5000` |
+| EAS preview/production | `https://bridge.howell-forge.com` (see `eas.json`) |
+
+Voice/TTS on the Agent tab uses this bridge — leave unset or local if you are not running the bridge.
 
 ---
 
-## Firebase Setup (Required for Auth)
+## Verify (no device required)
 
-1. Go to [console.firebase.google.com](https://console.firebase.google.com) and create a project.
-2. Enable **Authentication → Email/Password**.
-3. (Optional) Enable **Firestore Database** for cloud persistence.
-4. In **Project Settings → Your apps → Web app**, copy the `firebaseConfig`.
-5. Paste your config into `lib/firebase.ts` (replace the placeholder values).
-
----
-
-## Folder Structure
-
-```
-GroundChiFlow/
-├── app/
-│   ├── _layout.tsx          # Root layout — auth routing logic
-│   ├── (auth)/
-│   │   ├── _layout.tsx      # Auth stack layout
-│   │   └── login.tsx        # Login + Signup screen
-│   └── (tabs)/
-│       ├── _layout.tsx      # Tab bar config
-│       ├── index.tsx        # Dashboard (mock metrics, HRV, coherence)
-│       ├── routines.tsx     # 7-Day Breathwork Basics + timer
-│       ├── gut-health.tsx   # Daily gut health log (AsyncStorage)
-│       └── blood-work.tsx   # Biomarker tracker + manual entry
-├── components/
-│   ├── MetricCard.tsx       # Numeric metric card with icon + trend
-│   └── ProgressCircle.tsx   # SVG ring chart (react-native-svg)
-├── constants/
-│   └── Colors.ts            # Brand palette (greens + blues)
-├── context/
-│   └── AuthContext.tsx      # Firebase Auth state + hooks
-├── lib/
-│   └── firebase.ts          # Firebase app init
-└── README.md
+```bash
+npm run verify              # PT handoff self-tests + TypeScript
+npm run verify:pt-handoff   # lib/ PT merge & rehab scripts only
+npm run typecheck
 ```
 
 ---
 
-## Key Dependencies
+## Firebase (auth + optional cloud sync)
+
+1. [Firebase Console](https://console.firebase.google.com) — create project, enable **Email/Password** auth.
+2. (Optional) **Firestore** for cloud persistence.
+3. Copy web app config into `.env` as `EXPO_PUBLIC_FIREBASE_*` (see `.env.example`).
+
+Without Firebase env vars, the app still runs: **Skip for now** uses local storage only (`context/AuthContext.tsx`, `hooks/useHealthData.ts`).
+
+For production domains (e.g. GitHub Pages), add the host under Firebase **Authentication → Authorized domains**.
+
+---
+
+## Project layout
+
+```
+app/
+  _layout.tsx           # Auth routing + error boundary
+  (auth)/login.tsx      # Sign-in + medical disclaimer
+  (tabs)/               # Dashboard, Routines, Gut, Meals, Blood work, Agent, Resources
+components/             # MetricCard, ProgressCircle, LogVitalsModal, …
+constants/              # Routines content, DisclaimerResources, Colors
+hooks/useHealthData.ts  # Vitals & health data (Firestore + AsyncStorage)
+lib/                    # firebase, grokBridge, PT merge helpers
+scripts/                # verify:* self-tests
+docs/                   # GO_LIVE, RELEASE-READINESS, wearables, PT batches
+```
+
+---
+
+## Release readiness
+
+See **`docs/RELEASE-READINESS.md`** for blockers to paid or Play closed testing (privacy policy, paywall, store assets, health-claim wording).
+
+**Not medical advice:** full text in `constants/DisclaimerResources.ts` (`MEDICAL_DISCLAIMER`), shown on login and Resources.
+
+---
+
+## Key dependencies
 
 | Package | Purpose |
-|---|---|
-| `expo-router` | File-based navigation (tabs + stack) |
-| `firebase` | Auth + Firestore (cloud persistence) |
-| `@react-native-async-storage/async-storage` | Local data persistence |
-| `react-native-svg` | SVG progress circles on dashboard |
-| `@expo/vector-icons` | Ionicons throughout the app |
-| `react-native-safe-area-context` | Safe area padding |
+|---------|---------|
+| `expo-router` | File-based navigation |
+| `firebase` | Auth + Firestore |
+| `@react-native-async-storage/async-storage` | Local persistence |
+| `react-native-reanimated` | Animations (prefer for metric UI) |
+| `react-native-svg` | Progress rings |
 
 ---
 
-## Upgrade Path
+## Builds (manual — uses EAS credits)
 
-### 1. Live HRV Data
-Connect to Apple Health (`expo-health`) or Oura Ring / Garmin API.
-Replace mock values in `app/(tabs)/index.tsx`.
-
-### 2. Firebase Firestore Sync
-In `routines.tsx` and `gut-health.tsx`, replace `AsyncStorage` calls with:
-```ts
-import { doc, setDoc, getDoc } from 'firebase/firestore';
-import { db } from '../../lib/firebase';
-// Key docs by user.uid for per-user data
+```bash
+npx eas-cli login
+npm run build:android          # production AAB
+npm run build:android:preview  # internal APK
 ```
 
-### 3. Charts & Trends
-Add `victory-native` or use `react-native-svg` for sparklines on the dashboard.
-
-### 4. Function Health Import
-Add CSV/JSON file picker (`expo-document-picker`) to parse and import blood panel results.
-
-### 5. Push Notifications
-Use `expo-notifications` for daily breathwork reminders.
+Do not run production builds from shared agents unless credentials and billing are intended.
