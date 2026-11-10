@@ -19,6 +19,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/Colors';
 import {
   DISCLAIMER,
+  MEDICAL_DISCLAIMER,
   FRONT_RUNNERS,
   LIFESTYLE_EXTRAS,
   RELATED_ECOSYSTEM,
@@ -42,8 +43,13 @@ export default function ResourcesScreen() {
       >
         <Text style={styles.screenTitle}>Resources</Text>
         <Text style={styles.screenSub}>
-          Front runners, ecosystem, attributions. GroundChiFlow uniquely combines rehab pathways + Tai Chi/Qigong/Bagua + full daily routine.
+          Front runners, ecosystem, attributions. GroundChiFlow combines rehab pathways, Tai Chi/Qigong/Bagua, and a structured daily routine.
         </Text>
+
+        <View style={[styles.card, styles.medicalCard]}>
+          <Text style={styles.cardTitle}>{MEDICAL_DISCLAIMER.title}</Text>
+          <Text style={styles.cardBody}>{MEDICAL_DISCLAIMER.body}</Text>
+        </View>
 
         {/* ── Related ecosystem ─────────────────────────────────── */}
         <Text style={styles.sectionTitle}>Related ecosystem</Text>
@@ -236,6 +242,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.border,
     marginBottom: 24,
+  },
+  medicalCard: {
+    borderColor: Colors.warning,
+    marginBottom: 20,
   },
   cardTitle: { fontSize: 16, fontWeight: '700', color: Colors.textPrimary, marginBottom: 10 },
   cardBody: { fontSize: 13, color: Colors.textSecondary, lineHeight: 20 },

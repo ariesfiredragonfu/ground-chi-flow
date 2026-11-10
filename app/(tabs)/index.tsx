@@ -49,9 +49,9 @@ const MOCK_METRICS = {
 
 // ── Insight messages based on HRV ─────────────────────────────────────────
 function getHRVInsight(hrv: number): string {
-  if (hrv >= 70) return '🟢 Excellent recovery. Great day for high-intensity work.';
-  if (hrv >= 55) return '🟡 Good recovery. Moderate activity recommended.';
-  return '🔴 Lower HRV today. Prioritise breathwork and rest.';
+  if (hrv >= 70) return '🟢 Above your usual range today — a gentle check-in with how you feel.';
+  if (hrv >= 55) return '🟡 Mid-range today — adjust activity based on energy, not numbers alone.';
+  return '🔴 Lower than your recent logs — consider extra rest or breathwork if it feels right.';
 }
 
 export default function DashboardScreen() {

@@ -9,6 +9,7 @@ import {
   View,
   Text,
   Modal,
+  type ViewStyle,
   StyleSheet,
   TouchableOpacity,
   TextInput,
@@ -185,7 +186,7 @@ export default function LogVitalsModal({
   if (Platform.OS === 'web') {
     if (!visible) return null;
     return (
-      <View style={[styles.overlay, styles.overlayWeb]}>
+      <View style={[styles.overlay, overlayWebStyle]}>
         {content}
       </View>
     );
@@ -198,17 +199,25 @@ export default function LogVitalsModal({
   );
 }
 
+/** RN Web supports `position: 'fixed'`; core RN types omit it. */
+const overlayWebStyle: ViewStyle =
+  Platform.OS === 'web'
+    ? ({
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        zIndex: 9999,
+      } as unknown as ViewStyle)
+    : {};
+
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'flex-end',
   },
-  overlayWeb: Platform.OS === 'web' ? {
-    position: 'fixed' as const,
-    top: 0, left: 0, right: 0, bottom: 0,
-    zIndex: 9999,
-  } : {},
   keyboard: { maxHeight: '90%' },
   modal: {
     backgroundColor: Colors.bgCard,
